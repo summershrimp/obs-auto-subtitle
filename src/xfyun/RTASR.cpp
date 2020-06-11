@@ -12,16 +12,20 @@
 #include <QJsonValue>
 #include <QUrlQuery>
 #include <functional>
+#include <utility>
 
 using namespace std::placeholders;
 
 static QString hmacSha1(const QByteArray &key, const QByteArray &baseString);
 
 RTASR::RTASR(const QString &appId, const QString &apiKey, QObject *parent)  : QObject(parent), appId(appId), apiKey(apiKey){
-
+    qRegisterMetaType<ResultCallback>("ResultCallback");
     connect(this, &RTASR::start, this, &RTASR::onStart);
     connect(this, &RTASR::textMessageReceived, this, &RTASR::onTextMessageReceived);
     connect(this, &RTASR::sendAudioMessage, this, &RTASR::onSendAudioMessage);
+    connect(this, &RTASR::haveResult, this, &RTASR::onResult);
+
+    running = false;
 }
 
 void RTASR::onStart(){
@@ -30,6 +34,12 @@ void RTASR::onStart(){
     auto url_str = url.toString().toStdString();
     client.init_asio();
     client.set_message_handler(std::bind(RTASR::onMessage, this, _1, _2));
+    client.set_open_handler([=](auto hdl){
+        running = true;
+    });
+    client.set_close_handler([=](auto hdl){
+        running = false;
+    });
     client.set_access_channels(websocketpp::log::alevel::all);
     client.clear_access_channels(websocketpp::log::alevel::frame_payload);
     client.clear_access_channels(websocketpp::log::alevel::frame_header);
@@ -55,7 +65,7 @@ void RTASR::onMessage(RTASR *from, websocketpp::connection_hdl hdl, wsclient::me
 }
 
 void RTASR::onSendAudioMessage(const void *data, unsigned long size){
-    if(conn == nullptr){
+    if(conn == nullptr || ! running){
         return;
     }
     auto ec = conn->send(data, size);
@@ -74,7 +84,6 @@ void RTASR::onTextMessageReceived(const QString message) {
     if(!data.isString()) {
         return;
     }
-    qDebug() << data.toString().toStdString().c_str();
     QJsonDocument dataDoc(QJsonDocument::fromJson(data.toString().toUtf8()));
     auto cn = dataDoc["cn"];
     if(!cn.isObject()) {
@@ -108,8 +117,32 @@ void RTASR::onTextMessageReceived(const QString message) {
             }
         }
     }
-    qDebug() <<output <<  " " <<typeStr;
+    emit onResult(output, typeStr.toInt());
+}
 
+void RTASR::setResultCallback(ResultCallback cb) {
+    callback = std::move(cb);
+}
+
+void RTASR::onResult(QString message, int type) {
+    if(callback) callback(message, type);
+}
+
+void RTASR::stop() {
+    if(conn->get_state() == websocketpp::session::state::closing ||
+        conn->get_state() == websocketpp::session::state::closed) {
+        return;
+    }
+    conn->send(std::string(XFYUN_RTASR_GOODBYE), websocketpp::frame::opcode::TEXT);
+    websocketpp::lib::error_code ec;
+    conn->close( websocketpp::close::status::going_away, "", ec);
+    if (ec) {
+        qDebug() << "> Error closing connection: "
+                  << ec.message().c_str();
+    }
+    thread->join();
+    thread = nullptr;
+    conn = nullptr;
 }
 
 QUrl RTASR::buildQuery() {
@@ -127,6 +160,14 @@ QUrl RTASR::buildQuery() {
     url.setQuery(query);
     qDebug() << url;
     return url;
+}
+
+QString RTASR::getAppId() {
+    return appId;
+}
+
+QString RTASR::getApiKey() {
+    return apiKey;
 }
 
 

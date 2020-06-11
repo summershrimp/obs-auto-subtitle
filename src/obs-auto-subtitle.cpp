@@ -26,15 +26,11 @@ OBS_DECLARE_MODULE()
 OBS_MODULE_AUTHOR("Yibai Zhang")
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-auto-subtitle", "zh-CN")
 
-extern struct obs_source_info create_autosub_source_info();
 extern struct obs_source_info create_autosub_filter_info();
-struct obs_source_info autosub_source_info;
 struct obs_source_info autosub_filter_info;
 
 bool obs_module_load(void)
 {
-    autosub_source_info = create_autosub_source_info();
-	obs_register_source(&autosub_source_info);
     autosub_filter_info = create_autosub_filter_info();
     obs_register_source(&autosub_filter_info);
 

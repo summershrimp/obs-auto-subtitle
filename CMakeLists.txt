@@ -27,8 +27,7 @@ endif()
 
 set(obs-auto-subtitle_SOURCES
 		src/obs-auto-subtitle.cpp
-		src/obs-autosub-source.cpp
-		src/obs-autosub-filter.cpp src/xfyun/RTASR.cpp)
+        src/obs-autosub-filter.cpp src/xfyun/RTASR.cpp)
 
 set(obs-auto-subtitle_HEADERS
 		src/obs-auto-subtitle.h src/xfyun/RTASR.h)
