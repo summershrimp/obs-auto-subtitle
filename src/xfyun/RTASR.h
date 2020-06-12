@@ -32,6 +32,8 @@ public:
     QString getAppId();
     QString getApiKey();
 
+    ~RTASR();
+
 signals:
     void start();
     void sendAudioMessage(const void *, unsigned long);
