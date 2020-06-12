@@ -16,22 +16,15 @@ You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
 
-#include <string>
 #include <string.h>
 #include <functional>
 #include <QObject>
-#include <mutex>
 #include <obs-module.h>
 #include <obs.h>
-#include <util/platform.h>
 #include <util/threading.h>
 #include <chrono>
-#include <thread>
 
 #include "obs-auto-subtitle.h"
-
-#define APPID ""
-#define APIKEY ""
 
 #define T_FILTER_NAME obs_module_text("AutoSub.FilterName")
 
@@ -48,7 +41,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define T_TARGET_TEXT_SOURCE obs_module_text("AutoSub.Target.Source")
 
 #include <QThread>
-#include "xfyun/RTASR.h"
+#include "qxfyun/RTASR.h"
 #include <media-io/audio-resampler.h>
 
 using namespace std::placeholders;

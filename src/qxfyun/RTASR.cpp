@@ -21,7 +21,9 @@ static QString hmacSha1(const QByteArray &key, const QByteArray &baseString);
 RTASR::RTASR(const QString &appId, const QString &apiKey, QObject *parent)  : QObject(parent), appId(appId), apiKey(apiKey){
     qRegisterMetaType<ResultCallback>("ResultCallback");
     connect(this, &RTASR::start, this, &RTASR::onStart);
-    connect(this, &RTASR::textMessageReceived, this, &RTASR::onTextMessageReceived);
+    connect(&ws, &QWebSocket::connected, this, &RTASR::onConnected);
+    connect(&ws, &QWebSocket::disconnected, this, &RTASR::onDisconnected);
+    connect(&ws, &QWebSocket::textMessageReceived, this, &RTASR::onTextMessageReceived);
     connect(this, &RTASR::sendAudioMessage, this, &RTASR::onSendAudioMessage);
     connect(this, &RTASR::haveResult, this, &RTASR::onResult);
 
@@ -31,55 +33,33 @@ RTASR::RTASR(const QString &appId, const QString &apiKey, QObject *parent)  : QO
 void RTASR::onStart(){
 
     QUrl url(buildQuery());
-    auto url_str = url.toString().toStdString();
-    client.init_asio();
-    client.set_message_handler(std::bind(RTASR::onMessage, this, _1, _2));
-    client.set_open_handler([=](auto hdl){
-        running = true;
-    });
-    client.set_close_handler([=](auto hdl){
-        running = false;
-    });
-    client.set_access_channels(websocketpp::log::alevel::all);
-    client.clear_access_channels(websocketpp::log::alevel::frame_payload);
-    client.clear_access_channels(websocketpp::log::alevel::frame_header);
-    websocketpp::lib::error_code ec;
-    conn = client.get_connection(url_str, ec);
-    if(conn == nullptr || ec) {
-        qDebug() << ec.message().c_str();
-        return;
-    }
-    client.connect(conn);
-    thread = std::make_shared<websocketpp::lib::thread>(&wsclient::run, &client);
+    ws.open(url);
 }
 
 void RTASR::onConnected() {
+    running = true;
     qDebug() << "WebSocket connected";
+}
+
+void RTASR::onDisconnected() {
+    running = false;
+    qDebug() << "WebSocket disconnected";
 
 }
 
-void RTASR::onMessage(RTASR *from, websocketpp::connection_hdl hdl, wsclient::message_ptr msg) {
-    if(msg->get_opcode() == websocketpp::frame::opcode::TEXT) {
-        emit from->textMessageReceived(msg->get_payload().c_str());
-    } else {
-        qDebug() <<msg->get_opcode() << msg->get_payload().c_str();
-    }
-}
 
 void RTASR::onSendAudioMessage(const void *data, unsigned long size){
-    if(conn == nullptr || ! running){
+    if(! running){
         return;
     }
-    auto ec = conn->send(data, size);
-    if(ec) {
-        qDebug()<<ec.message().c_str();
-    }
+    ws.sendBinaryMessage(QByteArray::fromRawData((const char*)data, size));
 }
 
 
 void RTASR::onTextMessageReceived(const QString message) {
     QJsonDocument doc(QJsonDocument::fromJson(message.toUtf8()));
     if(doc["action"].toString() != "result" || doc["code"].toString() != "0") {
+        qDebug() << message;
         return;
     }
     auto data = doc["data"];
@@ -131,29 +111,8 @@ void RTASR::onResult(QString message, int type) {
 }
 
 void RTASR::stop() {
-    if(!conn){
-        return;
-    }
-    if(conn->get_state() == websocketpp::session::state::closing ||
-        conn->get_state() == websocketpp::session::state::closed) {
-        if(thread) {
-            thread->join();
-            thread.reset();
-        }
-        conn.reset();
-        return;
-    }
-    conn->send(std::string(XFYUN_RTASR_GOODBYE), websocketpp::frame::opcode::TEXT);
-    websocketpp::lib::error_code ec;
-    conn->close( websocketpp::close::status::normal, "", ec);
-    if (ec) {
-        qDebug() << "> Error closing connection: "
-                  << ec.message().c_str();
-    }
-    thread->join();
-    thread.reset();
-    conn.reset();
-    assert(thread == nullptr);
+    ws.sendBinaryMessage(QString(XFYUN_RTASR_GOODBYE).toUtf8());
+    ws.close();
 }
 
 QUrl RTASR::buildQuery() {
@@ -168,6 +127,8 @@ QUrl RTASR::buildQuery() {
     query.addQueryItem("appid", appId);
     query.addQueryItem("ts", ts);
     query.addQueryItem("signa", signa);
+    query.addQueryItem("punc", "0");
+    query.addQueryItem("pd", "tech");
     url.setQuery(query);
     qDebug() << url;
     return url;
