@@ -20,7 +20,6 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <util/platform.h>
 
 #include "obs-auto-subtitle.h"
-#include "xfyun/RTASR.h"
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_AUTHOR("Yibai Zhang")

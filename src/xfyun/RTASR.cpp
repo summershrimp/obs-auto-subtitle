@@ -61,6 +61,8 @@ void RTASR::onConnected() {
 void RTASR::onMessage(RTASR *from, websocketpp::connection_hdl hdl, wsclient::message_ptr msg) {
     if(msg->get_opcode() == websocketpp::frame::opcode::TEXT) {
         emit from->textMessageReceived(msg->get_payload().c_str());
+    } else {
+        qDebug() <<msg->get_opcode() << msg->get_payload().c_str();
     }
 }
 
@@ -129,20 +131,29 @@ void RTASR::onResult(QString message, int type) {
 }
 
 void RTASR::stop() {
+    if(!conn){
+        return;
+    }
     if(conn->get_state() == websocketpp::session::state::closing ||
         conn->get_state() == websocketpp::session::state::closed) {
+        if(thread) {
+            thread->join();
+            thread.reset();
+        }
+        conn.reset();
         return;
     }
     conn->send(std::string(XFYUN_RTASR_GOODBYE), websocketpp::frame::opcode::TEXT);
     websocketpp::lib::error_code ec;
-    conn->close( websocketpp::close::status::going_away, "", ec);
+    conn->close( websocketpp::close::status::normal, "", ec);
     if (ec) {
         qDebug() << "> Error closing connection: "
                   << ec.message().c_str();
     }
     thread->join();
-    thread = nullptr;
-    conn = nullptr;
+    thread.reset();
+    conn.reset();
+    assert(thread == nullptr);
 }
 
 QUrl RTASR::buildQuery() {
@@ -196,4 +207,8 @@ static QString hmacSha1(const QByteArray &inkey, const QByteArray &baseString)
     total.append(QCryptographicHash::hash(part, QCryptographicHash::Sha1));
     QByteArray hashed = QCryptographicHash::hash(total, QCryptographicHash::Sha1);
     return hashed.toBase64();
+}
+
+RTASR::~RTASR() {
+    stop();
 }
