@@ -132,10 +132,10 @@ void autosub_filter_getdefaults(obs_data_t* settings)
 
 }
 
-resample_info resample_output = {
-        .format = AUDIO_FORMAT_16BIT,
-        .samples_per_sec = 16000,
-        .speakers = SPEAKERS_MONO,
+struct resample_info resample_output = {
+    16000,
+    AUDIO_FORMAT_16BIT,
+    SPEAKERS_MONO
 };
 
 void autosub_filter_update(void* data, obs_data_t* settings)
@@ -148,9 +148,9 @@ void autosub_filter_update(void* data, obs_data_t* settings)
     s->sample_rate = sample_rate;
     s->channels = num_channels;
     resample_info resample_input = {
-            .format = AUDIO_FORMAT_FLOAT,
-            .samples_per_sec = sample_rate,
-            .speakers = SPEAKERS_MONO
+        sample_rate,
+        AUDIO_FORMAT_FLOAT,
+        SPEAKERS_MONO
     };
     if(s->resampler != nullptr) {
         audio_resampler_destroy(s->resampler);
