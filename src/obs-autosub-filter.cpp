@@ -23,26 +23,32 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <obs.h>
 #include <util/threading.h>
 #include <chrono>
+#include <QThread>
+#include <media-io/audio-resampler.h>
 
 #include "obs-auto-subtitle.h"
+#include "src/vendor/XFRtASR.h"
+#include "src/vendor/HwCloudRASR.h"
 
 #define T_FILTER_NAME obs_module_text("AutoSub.FilterName")
 
 #define PROP_PROVIDER "autosub_filter_sp"
 #define T_PROVIDER obs_module_text("AutoSub.ServiceProvider")
 
-#define PROP_APPID "autosub_filter_appid"
+#define PROP_XF_APPID "autosub_filter_xf_appid"
 #define T_APPID obs_module_text("AutoSub.APPID")
 
-#define PROP_APIKEY "autosub_filter_apikey"
+#define PROP_XF_APIKEY "autosub_filter_xf_apikey"
 #define T_APIKEY obs_module_text("AutoSub.APIKEY")
+
+#define PROP_HWCLOUD_PROJID "autosub_filter_hwcloud_proj_id"
+#define T_PROJECT_ID obs_module_text("AutoSub.ProjectId")
+
+#define PROP_HWCLOUD_TOKEN "autosub_filter_hwcloud_token"
+#define T_TOKEN obs_module_text("AutoSub.Token")
 
 #define PROP_TARGET_TEXT_SOURCE "autosub_filter_target_source"
 #define T_TARGET_TEXT_SOURCE obs_module_text("AutoSub.Target.Source")
-
-#include <QThread>
-#include "qxfyun/RTASR.h"
-#include <media-io/audio-resampler.h>
 
 using namespace std::placeholders;
 enum ServiceProvider {
@@ -66,9 +72,24 @@ struct autosub_filter
     bool running;
     const char *target_source_name;
 
-    RTASR *asr;
+    int provider;
+    struct {
+        QString appId;
+        QString apiKey;
+    }xfyun;
+
+    struct {
+        QString project_id;
+        QString token;
+    }hwcloud;
+
+    int refresh;
+
+    ASRBase *asr;
+    std::mutex lock_asr;
     audio_resampler_t *resampler;
 
+    std::mutex lock_target_text;
     obs_weak_source_t *target_text;
 };
 
@@ -91,21 +112,54 @@ static bool add_sources(void *data, obs_source_t *source)
     return true;
 }
 
+#define PROPERTY_SET_UNVISIBLE(props, prop_name) \
+    do {\
+        obs_property *prop = obs_properties_get(props, prop_name);\
+        obs_property_set_visible(prop, false);\
+    }while(0)
+
+#define PROPERTY_SET_VISIBLE(props, prop_name) \
+    do {\
+        obs_property *prop = obs_properties_get(props, prop_name);\
+        obs_property_set_visible(prop, true);\
+    }while(0)
+
+static bool provider_modified(obs_properties_t *props,
+                            obs_property_t *property,
+                            obs_data_t *settings){
+    int cur_provider = obs_data_get_int(settings, PROP_PROVIDER);
+    PROPERTY_SET_UNVISIBLE(props, PROP_XF_APPID);
+    PROPERTY_SET_UNVISIBLE(props, PROP_XF_APIKEY);
+    PROPERTY_SET_UNVISIBLE(props, PROP_HWCLOUD_PROJID);
+    PROPERTY_SET_UNVISIBLE(props, PROP_HWCLOUD_TOKEN);
+
+    switch(cur_provider) {
+        case SP_Hwcloud:
+            PROPERTY_SET_VISIBLE(props, PROP_HWCLOUD_PROJID);
+            PROPERTY_SET_VISIBLE(props, PROP_HWCLOUD_TOKEN);
+            break;
+        case SP_Xfyun:
+            PROPERTY_SET_VISIBLE(props, PROP_XF_APPID);
+            PROPERTY_SET_VISIBLE(props, PROP_XF_APIKEY);
+            break;
+        case SP_Aliyun:
+            break;
+        case SP_Sogou:
+            break;
+        default:
+            break;
+    }
+
+    return true;
+}
+#undef PROPERTY_SET_UNVISIBLE
+
 obs_properties_t* autosub_filter_getproperties(void* data)
 {
     char nametext[256];
     auto s = (struct autosub_filter*)data;
 
     obs_properties_t* props = obs_properties_create();
-
-    auto providers = obs_properties_add_list(props, PROP_PROVIDER, T_PROVIDER, OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-    obs_property_list_add_int(providers, T_SP_XFYUN, SP_Xfyun);
-    obs_property_list_add_int(providers, T_SP_SOGOU, SP_Sogou);
-    obs_property_list_add_int(providers, T_SP_HWCLOUD, SP_Hwcloud);
-    obs_property_list_add_int(providers, T_SP_ALIYUN, SP_Aliyun);
-
-    obs_properties_add_text(props, PROP_APPID, T_APPID, OBS_TEXT_DEFAULT);
-    obs_properties_add_text(props, PROP_APIKEY, T_APIKEY, OBS_TEXT_DEFAULT);
 
     obs_property_t *sources = obs_properties_add_list(
             props, PROP_TARGET_TEXT_SOURCE, T_TARGET_TEXT_SOURCE,
@@ -114,6 +168,26 @@ obs_properties_t* autosub_filter_getproperties(void* data)
     obs_property_list_add_string(sources, obs_module_text("None"), "none");
 
     obs_enum_sources(add_sources, sources);
+
+
+    auto providers = obs_properties_add_list(props, PROP_PROVIDER, T_PROVIDER, OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+    obs_property_list_add_int(providers, T_SP_XFYUN, SP_Xfyun);
+    obs_property_list_add_int(providers, T_SP_SOGOU, SP_Sogou);
+    obs_property_list_add_int(providers, T_SP_HWCLOUD, SP_Hwcloud);
+    obs_property_list_add_int(providers, T_SP_ALIYUN, SP_Aliyun);
+
+    obs_property_set_modified_callback(providers, provider_modified);
+
+    auto t = obs_properties_add_text(props, PROP_XF_APPID, T_APPID, OBS_TEXT_DEFAULT);
+    obs_property_set_visible(t, false);
+    t = obs_properties_add_text(props, PROP_XF_APIKEY, T_APIKEY, OBS_TEXT_DEFAULT);
+    obs_property_set_visible(t, false);
+
+
+    t = obs_properties_add_text(props, PROP_HWCLOUD_PROJID, T_PROJECT_ID, OBS_TEXT_DEFAULT);
+    obs_property_set_visible(t, false);
+    t = obs_properties_add_text(props, PROP_HWCLOUD_TOKEN, T_TOKEN, OBS_TEXT_MULTILINE);
+    obs_property_set_visible(t, false);
 
 
     return props;
@@ -150,42 +224,84 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         s->resampler = nullptr;
     }
     s->resampler = audio_resampler_create(&resample_output, &resample_input);
-
-
     s->target_source_name = obs_data_get_string(settings, PROP_TARGET_TEXT_SOURCE);
 
-    const char *appid = obs_data_get_string(settings, PROP_APPID);
-    const char *apikey = obs_data_get_string(settings, PROP_APIKEY);
-    blog(LOG_INFO, "APPINFO: %s, %s", appid, apikey);
-    if(strcmp(appid, "") == 0 || strcmp(apikey, "") == 0) {
-        if(s->asr) {
-            s->running = false;
-            s->asr->stop();
-            delete s->asr;
-        }
-        return;
+    int provider = obs_data_get_int(settings, PROP_PROVIDER);
+    if(provider != s->provider) {
+        s->provider = provider;
+        s->refresh = true;
     }
-    bool need_update = true;
+    const char *appid, *apikey, *project_id, *token;
+    switch (s->provider) {
+        case SP_Xfyun:
+            appid = obs_data_get_string(settings, PROP_XF_APPID);
+            apikey = obs_data_get_string(settings, PROP_XF_APIKEY);
+            if(strcmp(appid, "") == 0 || strcmp(apikey, "") == 0) {
+                s->refresh = false;
+                break;
+            }
+            if(s->xfyun.apiKey == apikey && s->xfyun.appId == appid){
+                s->refresh = s->refresh || false;
+                break;
+            }
+            s->xfyun.appId = appid;
+            s->xfyun.apiKey = apikey;
+            s->refresh = true;
+            qDebug() << "Xunfei: " << s->xfyun.appId << s->xfyun.apiKey;
+            break;
+        case SP_Hwcloud:
+            project_id = obs_data_get_string(settings, PROP_HWCLOUD_PROJID);
+            token = obs_data_get_string(settings, PROP_HWCLOUD_TOKEN);
+            if(strcmp(project_id, "") == 0 || strcmp(token, "") == 0) {
+                s->refresh = false;
+                break;
+            }
+            if(s->hwcloud.project_id == project_id && s->hwcloud.token == token){
+                s->refresh = s->refresh || false;
+                break;
+            }
+            s->hwcloud.project_id = project_id;
+            s->hwcloud.token = token;
+            s->refresh = true;
+            qDebug() << "HwCloud: " << s->hwcloud.project_id << s->hwcloud.token;
+            break;
+    }
+
+    if(!s->refresh)
+        return;
+    s->refresh = false;
+    s->lock_asr.lock();
     if(s->asr){
-        if(s->asr->getApiKey() == apikey && s->asr->getAppId() == appid){
-            need_update = false;
-        }
-    }
-    if(!need_update) {
-        return;
-    }
-    if(s->asr) {
         s->asr->stop();
         delete s->asr;
+        s->asr = nullptr;
         s->running = false;
     }
-    s->asr = new RTASR(appid, apikey);
+    switch(s->provider){
+        case SP_Xfyun:
+            s->asr = new XFRtASR(s->xfyun.appId, s->xfyun.apiKey);
+            break;
+        case SP_Hwcloud:
+            s->asr = new HwCloudRASR(s->hwcloud.project_id, s->hwcloud.token);
+            break;
+        default:
+            blog(LOG_WARNING, "Unsupported ASR provider id: %d", s->provider);
+            break;
+    }
+    if(!s->asr) {
+        s->lock_asr.unlock();
+        return;
+    }
     s->asr->setResultCallback([=](QString str, int typ){
         if(typ == 0)
             blog(LOG_INFO, "Result: %d, %s", typ, str.toStdString().c_str());
-        if(!s->target_text)
+        s->lock_target_text.lock();
+        if(!s->target_text) {
+            s->lock_target_text.unlock();
             return;
+        }
         auto target = obs_weak_source_get_source(s->target_text);
+        s->lock_target_text.unlock();
         if(!target){
             return;
         }
@@ -195,6 +311,7 @@ void autosub_filter_update(void* data, obs_data_t* settings)
     });
     s->asr->start();
     s->running = true;
+    s->lock_asr.unlock();
 
 }
 
@@ -220,11 +337,12 @@ void autosub_filter_deactivated(void* data)
 
 void* autosub_filter_create(obs_data_t* settings, obs_source_t* source)
 {
-    auto s = (struct autosub_filter*)bzalloc(sizeof(struct autosub_filter));
+    auto s = new autosub_filter;
     s->resampler = nullptr;
     s->asr = nullptr;
     s->running = false;
     s->target_text = nullptr;
+    s->provider = SP_Default;
 
     s->source = source;
 
@@ -236,15 +354,17 @@ void* autosub_filter_create(obs_data_t* settings, obs_source_t* source)
 void autosub_filter_destroy(void* data)
 {
     autosub_filter *s = (autosub_filter*)data;
+    s->lock_asr.lock();
     s->running = false;
     if(s->asr) {
         s->asr->stop();
         delete s->asr;
     }
+    s->lock_asr.unlock();
     if(s->resampler) {
         audio_resampler_destroy(s->resampler);
     }
-
+    delete s;
 }
 
 struct obs_audio_data * autosub_filter_audio(void *data, struct obs_audio_data *audio) {
@@ -259,7 +379,9 @@ struct obs_audio_data * autosub_filter_audio(void *data, struct obs_audio_data *
     uint64_t ts_offset = 0;
     bool ok = audio_resampler_resample(s->resampler, output, &out_samples, &ts_offset, audio->data, audio->frames);
     if(ok) {
-        s->asr->sendAudioMessage(output[0], out_samples * 2);
+        s->lock_asr.lock();
+        emit s->asr->sendAudioMessage(output[0], out_samples * 2);
+        s->lock_asr.unlock();
     }
     return audio;
 }
@@ -270,9 +392,10 @@ static void autosub_filter_tick(void *data, float seconds){
     if(s->target_text != nullptr){
         obs_source_t *original_source = obs_weak_source_get_source(s->target_text);
         if(strcmp(obs_source_get_name(original_source), s->target_source_name) == 0){
-            return;
+            return ;
         }
     }
+    s->lock_target_text.lock();
     if(!target_source) {
         s->target_text = nullptr;
     } else {
@@ -281,6 +404,7 @@ static void autosub_filter_tick(void *data, float seconds){
         obs_data_set_string(text_settings, "text", "Preparing...");
         obs_source_update(target_source, text_settings);
     }
+    s->lock_target_text.unlock();
 }
 
 struct obs_source_info create_autosub_filter_info()
