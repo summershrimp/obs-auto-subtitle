@@ -42,7 +42,7 @@ echo "[obs-auto-subtitle] Installing obs-auto-subtitle dependency 'QT 5.10.1'.."
 # Pouring from the bottle is much quicker though, so use bottle for now.
 # =!= NOTICE =!=
 
-brew install https://gist.githubusercontent.com/DDRBoxman/b3956fab6073335a4bf151db0dcbd4ad/raw/ed1342a8a86793ea8c10d8b4d712a654da121ace/qt.rb
+brew install https://gist.githubusercontent.com/DDRBoxman/9c7a2b08933166f4b61ed9a44b242609/raw/ef4de6c587c6bd7f50210eccd5bd51ff08e6de13/qt.rb
 
 # Pin this version of QT5 to avoid `brew upgrade`
 # upgrading it to incompatible version

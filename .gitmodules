@@ -1,9 +1,0 @@
-[submodule "thirdpty/mdns"]
-	path = thirdpty/mdns
-	url = https://github.com/mjansson/mdns
-[submodule "thirdpty/websocketpp"]
-	path = thirdpty/websocketpp
-	url = https://github.com/zaphoyd/websocketpp
-[submodule "thirdpty/asio"]
-	path = thirdpty/asio
-	url = https://github.com/chriskohlhoff/asio/

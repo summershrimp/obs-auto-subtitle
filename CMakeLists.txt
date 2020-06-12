@@ -17,7 +17,7 @@ if (WIN32 OR APPLE)
 endif()
 
 find_package(LibObs REQUIRED)
-find_package(Qt5 REQUIRED Core Widgets)
+find_package(Qt5 REQUIRED Core Widgets Network WebSockets)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(ARCH 64)
@@ -27,10 +27,12 @@ endif()
 
 set(obs-auto-subtitle_SOURCES
 		src/obs-auto-subtitle.cpp
-        src/obs-autosub-filter.cpp src/xfyun/RTASR.cpp)
+        src/obs-autosub-filter.cpp
+		src/qxfyun/RTASR.cpp)
 
 set(obs-auto-subtitle_HEADERS
-		src/obs-auto-subtitle.h src/xfyun/RTASR.h)
+		src/obs-auto-subtitle.h
+		src/qxfyun/RTASR.h)
 
 add_library(obs-auto-subtitle MODULE
 	${obs-auto-subtitle_SOURCES}
@@ -41,13 +43,14 @@ include_directories(
 		${Qt5Core_INCLUDES}
 		${Qt5Widgets_INCLUDES}
 		${Qt5Network_INCLUDES}
-		${CMAKE_SOURCE_DIR}/thirdpty/websocketpp
-		${CMAKE_SOURCE_DIR}/thirdpty/asio/asio/include)
+		${Qt5WebSockets_INCLUDES})
 
 target_link_libraries(obs-auto-subtitle
 		libobs
 		Qt5::Core
-		Qt5::Widgets)
+		Qt5::Widgets
+		Qt5::Network
+		Qt5::WebSockets)
 
 # Windows
 if(WIN32)
@@ -92,6 +95,16 @@ if(WIN32)
 				"$<TARGET_FILE:obs-auto-subtitle>"
 				"${RELEASE_DIR}/obs-plugins/${OBS_ARCH_NAME}")
 
+		COMMAND if $<CONFIG:Release>==1 (
+			"${CMAKE_COMMAND}" -E copy
+				"$<TARGET_FILE:Qt5::Network>"
+				"${RELEASE_DIR}/bin/${OBS_ARCH_NAME}")
+
+		COMMAND if $<CONFIG:Release>==1 (
+			"${CMAKE_COMMAND}" -E copy
+				"$<TARGET_FILE:Qt5::WebSockets>"
+				"${RELEASE_DIR}/bin/${OBS_ARCH_NAME}")
+
 			# If config is RelWithDebInfo, package release files
 		COMMAND if $<CONFIG:RelWithDebInfo>==1 (
 			"${CMAKE_COMMAND}" -E make_directory
@@ -110,6 +123,16 @@ if(WIN32)
 				"${RELEASE_DIR}/obs-plugins/${OBS_ARCH_NAME}")
 
 		COMMAND if $<CONFIG:RelWithDebInfo>==1 (
+			"${CMAKE_COMMAND}" -E copy
+				"$<TARGET_FILE:Qt5::Network>"
+				"${RELEASE_DIR}/bin/${OBS_ARCH_NAME}")
+
+		COMMAND if $<CONFIG:RelWithDebInfo>==1 (
+			"${CMAKE_COMMAND}" -E copy
+				"$<TARGET_FILE:Qt5::WebSockets>"
+				"${RELEASE_DIR}/bin/${OBS_ARCH_NAME}")
+
+			COMMAND if $<CONFIG:RelWithDebInfo>==1 (
 			"${CMAKE_COMMAND}" -E copy
 				"$<TARGET_PDB_FILE:obs-auto-subtitle>"
 				"${RELEASE_DIR}/obs-plugins/${OBS_ARCH_NAME}")
