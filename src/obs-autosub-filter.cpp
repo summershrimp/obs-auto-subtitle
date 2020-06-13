@@ -34,6 +34,10 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #define T_FILTER_NAME obs_module_text("AutoSub.FilterName")
 
+
+#define PROP_MAX_COUNT "autosub_filter_max_count"
+#define T_MAX_CHAR_COUNT obs_module_text("AutoSub.MaxCharCount")
+
 #define PROP_PROVIDER "autosub_filter_sp"
 #define T_PROVIDER obs_module_text("AutoSub.ServiceProvider")
 
@@ -76,6 +80,7 @@ struct autosub_filter
     obs_source_t* source;
     uint32_t sample_rate;
     uint32_t channels;
+    int max_count;
     bool running;
     const char *target_source_name;
 
@@ -181,6 +186,8 @@ obs_properties_t* autosub_filter_getproperties(void* data)
             props, PROP_TARGET_TEXT_SOURCE, T_TARGET_TEXT_SOURCE,
             OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 
+    obs_properties_add_int(props, PROP_MAX_COUNT, T_MAX_CHAR_COUNT, 0, 100000, 1);
+
     obs_property_list_add_string(sources, obs_module_text("None"), "none");
 
     obs_enum_sources(add_sources, sources);
@@ -217,7 +224,7 @@ obs_properties_t* autosub_filter_getproperties(void* data)
 void autosub_filter_getdefaults(obs_data_t* settings)
 {
     obs_data_set_default_int(settings, PROP_PROVIDER, SP_Xfyun);
-
+    obs_data_set_default_int(settings, PROP_MAX_COUNT, 0);
 }
 
 struct resample_info resample_output = {
@@ -246,6 +253,8 @@ void autosub_filter_update(void* data, obs_data_t* settings)
     }
     s->resampler = audio_resampler_create(&resample_output, &resample_input);
     s->target_source_name = obs_data_get_string(settings, PROP_TARGET_TEXT_SOURCE);
+
+    s->max_count = obs_data_get_int(settings, PROP_MAX_COUNT);
 
     int provider = obs_data_get_int(settings, PROP_PROVIDER);
     if(provider != s->provider) {
@@ -344,6 +353,10 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         if(!target){
             return;
         }
+        int t = s->max_count;
+        if(t != 0 && str.count() > t){
+            str = str.rightRef(t).toString();
+        }
         auto text_settings = obs_source_get_settings(target);
         obs_data_set_string(text_settings, "text", str.toUtf8().toStdString().c_str());
         obs_source_update(target, text_settings);
@@ -382,6 +395,7 @@ void* autosub_filter_create(obs_data_t* settings, obs_source_t* source)
     s->running = false;
     s->target_text = nullptr;
     s->provider = SP_Default;
+    s->max_count = 0;
 
     s->source = source;
 
