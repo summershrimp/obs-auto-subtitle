@@ -27,7 +27,7 @@ HwCloudRASR::HwCloudRASR(const QString &project_id, const QString &token, QObjec
 
     running = false;
 }
-const char *startMsg = "{\n"
+static const char *startMsg = "{\n"
                     "  \"command\": \"START\",\n"
                     "  \"config\":\n"
                     "  {\n"
@@ -40,7 +40,7 @@ const char *startMsg = "{\n"
                     "  }\n"
                     "}";
 
-const char *endMsg = "{\n"
+static const char *endMsg = "{\n"
                      "  \"command\": \"END\",\n"
                      "  \"cancel\": false\n"
                      "}";
@@ -109,15 +109,12 @@ void HwCloudRASR::onStop() {
     ws.close();
 }
 
-QUrl HwCloudRASR::buildQuery() {
-    return QUrl("");
-}
 
-QString HwCloudRASR::getAppId() {
+QString HwCloudRASR::getProjectId() {
     return project_id;
 }
 
-QString HwCloudRASR::getApiKey() {
+QString HwCloudRASR::getToken() {
     return token;
 }
 
