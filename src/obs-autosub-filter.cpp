@@ -26,9 +26,11 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <QThread>
 #include <media-io/audio-resampler.h>
 
+
 #include "obs-auto-subtitle.h"
-#include "src/vendor/XFRtASR.h"
-#include "src/vendor/HwCloudRASR.h"
+#include "vendor/XFRtASR.h"
+#include "vendor/HwCloudRASR.h"
+#include "vendor/AliNLS.h"
 
 #define T_FILTER_NAME obs_module_text("AutoSub.FilterName")
 
@@ -46,6 +48,11 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #define PROP_HWCLOUD_TOKEN "autosub_filter_hwcloud_token"
 #define T_TOKEN obs_module_text("AutoSub.Token")
+
+#define PROP_ALINLS_APPKEY "autosub_filter_alinls_appkey"
+#define T_APPKEY obs_module_text("AutoSub.AppKey")
+
+#define PROP_ALINLS_TOKEN "autosub_filter_alinls_token"
 
 #define PROP_TARGET_TEXT_SOURCE "autosub_filter_target_source"
 #define T_TARGET_TEXT_SOURCE obs_module_text("AutoSub.Target.Source")
@@ -82,6 +89,11 @@ struct autosub_filter
         QString project_id;
         QString token;
     }hwcloud;
+
+    struct {
+        QString appKey;
+        QString token;
+    }alinls;
 
     int refresh;
 
@@ -132,6 +144,8 @@ static bool provider_modified(obs_properties_t *props,
     PROPERTY_SET_UNVISIBLE(props, PROP_XF_APIKEY);
     PROPERTY_SET_UNVISIBLE(props, PROP_HWCLOUD_PROJID);
     PROPERTY_SET_UNVISIBLE(props, PROP_HWCLOUD_TOKEN);
+    PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_APPKEY);
+    PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_TOKEN);
 
     switch(cur_provider) {
         case SP_Hwcloud:
@@ -143,6 +157,8 @@ static bool provider_modified(obs_properties_t *props,
             PROPERTY_SET_VISIBLE(props, PROP_XF_APIKEY);
             break;
         case SP_Aliyun:
+            PROPERTY_SET_VISIBLE(props, PROP_ALINLS_APPKEY);
+            PROPERTY_SET_VISIBLE(props, PROP_ALINLS_TOKEN);
             break;
         case SP_Sogou:
             break;
@@ -189,6 +205,11 @@ obs_properties_t* autosub_filter_getproperties(void* data)
     t = obs_properties_add_text(props, PROP_HWCLOUD_TOKEN, T_TOKEN, OBS_TEXT_MULTILINE);
     obs_property_set_visible(t, false);
 
+    t = obs_properties_add_text(props, PROP_ALINLS_APPKEY, T_APPKEY, OBS_TEXT_DEFAULT);
+    obs_property_set_visible(t, false);
+    t = obs_properties_add_text(props, PROP_ALINLS_TOKEN, T_TOKEN, OBS_TEXT_DEFAULT);
+    obs_property_set_visible(t, false);
+
 
     return props;
 }
@@ -231,7 +252,7 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         s->provider = provider;
         s->refresh = true;
     }
-    const char *appid, *apikey, *project_id, *token;
+    const char *appid, *apikey, *project_id, *token, *appkey;
     switch (s->provider) {
         case SP_Xfyun:
             appid = obs_data_get_string(settings, PROP_XF_APPID);
@@ -265,6 +286,22 @@ void autosub_filter_update(void* data, obs_data_t* settings)
             s->refresh = true;
             qDebug() << "HwCloud: " << s->hwcloud.project_id << s->hwcloud.token;
             break;
+        case SP_Aliyun:
+            appkey = obs_data_get_string(settings, PROP_ALINLS_APPKEY);
+            token = obs_data_get_string(settings, PROP_ALINLS_TOKEN);
+            if(strcmp(appkey, "") == 0 || strcmp(token, "") == 0) {
+                s->refresh = false;
+                break;
+            }
+            if(s->alinls.appKey == appkey && s->alinls.token == token){
+                s->refresh = s->refresh || false;
+                break;
+            }
+            s->alinls.appKey = appkey;
+            s->alinls.token = token;
+            s->refresh = true;
+            qDebug() << "AliNLS: " << s->alinls.appKey << s->alinls.token;
+            break;
     }
 
     if(!s->refresh)
@@ -284,6 +321,8 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         case SP_Hwcloud:
             s->asr = new HwCloudRASR(s->hwcloud.project_id, s->hwcloud.token);
             break;
+        case SP_Aliyun:
+            s->asr = new AliNLS(s->alinls.appKey, s->alinls.token);
         default:
             blog(LOG_WARNING, "Unsupported ASR provider id: %d", s->provider);
             break;

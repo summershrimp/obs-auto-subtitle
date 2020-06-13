@@ -28,13 +28,17 @@ endif()
 set(obs-auto-subtitle_SOURCES
 		src/obs-auto-subtitle.cpp
         src/obs-autosub-filter.cpp
+		src/vendor/ASRBase.cpp
 		src/vendor/XFRtASR.cpp
-		src/vendor/HwCloudRASR.cpp src/vendor/ASRBase.cpp src/vendor/ASRBase.h)
+		src/vendor/HwCloudRASR.cpp
+		src/vendor/AliNLS.cpp)
 
 set(obs-auto-subtitle_HEADERS
 		src/obs-auto-subtitle.h
+		src/vendor/ASRBase.h
 		src/vendor/XFRtASR.h
-		src/vendor/HwCloudRASR.h)
+		src/vendor/HwCloudRASR.h
+		src/vendor/AliNLS.h)
 
 add_library(obs-auto-subtitle MODULE
 	${obs-auto-subtitle_SOURCES}

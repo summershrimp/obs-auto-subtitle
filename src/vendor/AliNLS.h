@@ -2,26 +2,27 @@
 // Created by Yibai Zhang on 2020/6/10.
 //
 
-#ifndef OBS_AUTO_SUBTITLE_HW_RASR_H
-#define OBS_AUTO_SUBTITLE_HW_RASR_H
+#ifndef OBS_AUTO_SUBTITLE_ALINLS_H
+#define OBS_AUTO_SUBTITLE_ALINLS_H
 #include <QObject>
+#include <QMap>
 #include <QString>
 #include <QWebSocket>
 #include <memory>
 
 #include "ASRBase.h"
 
-#define HWCLOUD_SIS_ENDPOINT "sis-ext.cn-north-4.myhuaweicloud.com"
-#define HWCLOUD_SIS_RASR_URI "/v1/%1/rasr/continue-stream"
+#define ALINLS_URL "wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1"
+#define ALINLS_TOKEN_HEADER "X-NLS-Token"
 
-class HwCloudRASR : public ASRBase {
+class AliNLS : public ASRBase {
     Q_OBJECT
 public:
-    HwCloudRASR(const QString &project_id, const QString &token, QObject *parent = nullptr);
-    QString getProjectId();
+    AliNLS(const QString &appKey, const QString &token, QObject *parent = nullptr);
+    QString getAppKey();
     QString getToken();
 
-    ~HwCloudRASR();
+    ~AliNLS();
 
 signals:
     void textMessageReceived(const QString message);
@@ -37,11 +38,15 @@ private slots:
     void onResult(QString message, int type);
     void onError(QAbstractSocket::SocketError error);
 private:
-    QString project_id;
+    QString appKey;
     QString token;
     QWebSocket ws;
     bool running;
-
+    QHash<QString, QString> _header;
+    QHash<QString, QJsonValue> _payload;
+    QString serializeReq();
+    QString task_id;
 };
 
-#endif //OBS_AUTO_SUBTITLE_HW_RASR_H
+
+#endif //OBS_AUTO_SUBTITLE_ALINLS_H
