@@ -54,7 +54,7 @@ install_name_tool \
   -change /usr/local/Cellar/qt/5.14.1/lib/QtCore.framework/Versions/5/QtCore \
   @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore \
   -change /usr/local/Cellar/qt/5.14.1/lib/QtNetwork.framework/Versions/5/QtNetwork \
-  @executable_path/../Frameworks/QtNetwork.framework/QtNetwork/5/QtCore \
+  @executable_path/../Frameworks/QtNetwork.framework/Versions/5/QtNetwork \
   ./build/QtWebSockets.framework/Versions/5/QtWebSockets
 
 # Check if replacement worked
