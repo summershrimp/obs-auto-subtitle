@@ -113,20 +113,18 @@ void XFRtASR::onTextMessageReceived(const QString message) {
         return;
     }
     for(auto i: rt.toArray()){
-        auto ws = i.toObject()["ws"];
+        auto ws = i.toObject().value("ws");
         if(!ws.isArray()) {
             return;
         }
+
         for(auto w: ws.toArray()){
-            auto cw = w.toObject()["cw"];
+            auto cw = w.toObject().value("cw");
             if(!cw.isArray()){
                 return;
             }
             for(auto c: cw.toArray()){
-                if(!c.toObject()["w"].isString()) {
-                    return;
-                }
-                output += c.toObject()["w"].toString();
+                output += c.toObject().value("w").toString();
             }
         }
     }
