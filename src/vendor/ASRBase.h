@@ -22,7 +22,18 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <QString>
 #include <QObject>
 
+enum ErrorType {
+    ERROR_NOERROR = 0,
+    ERROR_SOCKET,
+    ERROR_API,
+    ERROR_END
+};
+
 typedef std::function<void(QString, int)> ResultCallback;
+typedef std::function<void(ErrorType, QString)> ErrorCallback;
+typedef std::function<void()> ConnectedCallback;
+typedef std::function<void()> DisconnectedCallback;
+
 
 enum ResultType {
     ResultType_End = 0,
@@ -35,10 +46,17 @@ class ASRBase : public QObject {
 public:
     ASRBase(QObject *parent);
     void setResultCallback(ResultCallback cb);
+    void setErrorCallback(ErrorCallback cb);
+    void setConnectedCallback(ConnectedCallback cb);
+    void setDisconnectedCallback(DisconnectedCallback cb);
     virtual ~ASRBase(){};
 
 protected:
-    ResultCallback getCallback();
+    ResultCallback getResultCallback();
+    ErrorCallback getErrorCallback();
+    ConnectedCallback getConnectedCallback();
+    DisconnectedCallback getDisconnectedCallback();
+
 signals:
     void sendAudioMessage(const void *, unsigned long);
     void start();
@@ -48,7 +66,10 @@ public slots:
     virtual void onStart() = 0;
     virtual void onStop() = 0;
 private:
-    ResultCallback cb;
+    ResultCallback resultCallback;
+    ErrorCallback  errorCallback;
+    ConnectedCallback connectedCallback;
+    DisconnectedCallback disconnectedCallback;
 };
 
 

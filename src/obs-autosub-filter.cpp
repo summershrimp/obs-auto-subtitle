@@ -340,9 +340,8 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         s->lock_asr.unlock();
         return;
     }
-    s->asr->setResultCallback([=](QString str, int typ){
-        if(typ == 0)
-            blog(LOG_INFO, "Result: %d, %s", typ, str.toStdString().c_str());
+
+    std::function<void(QString)> setText([=](QString str){
         s->lock_target_text.lock();
         if(!s->target_text) {
             s->lock_target_text.unlock();
@@ -353,14 +352,48 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         if(!target){
             return;
         }
-        int t = s->max_count;
-        if(t != 0 && str.count() > t){
-            str = str.rightRef(t).toString();
-        }
         auto text_settings = obs_source_get_settings(target);
         obs_data_set_string(text_settings, "text", str.toUtf8().toStdString().c_str());
         obs_source_update(target, text_settings);
     });
+
+    s->asr->setResultCallback([=](QString str, int typ){
+        if(typ == 0)
+            blog(LOG_INFO, "Result: %d, %s", typ, str.toStdString().c_str());
+        int t = s->max_count;
+        if(t != 0 && str.count() > t){
+            str = str.rightRef(t).toString();
+        }
+        setText(str);
+    });
+
+    s->asr->setErrorCallback([=](ErrorType type, QString msg) {
+        blog(LOG_INFO, "Websocket error: %d, %s", type, msg.toStdString().c_str());
+        QString errorMsg;
+        switch(type){
+            case ERROR_API:
+                errorMsg = "API Error";
+                break;
+            case ERROR_SOCKET:
+                errorMsg = "Websocket Error";
+            default:
+                errorMsg = "Unknown error";
+        }
+        if(!msg.isEmpty()){
+            errorMsg = errorMsg  + ": " + msg;
+        }
+        setText(errorMsg);
+    });
+
+    s->asr->setConnectedCallback([=](){
+        blog(LOG_INFO, "Websocket connected.");
+        setText("Connected");
+    });
+
+    s->asr->setDisconnectedCallback([=](){
+        blog(LOG_INFO, "Websocket disconnected.");
+    });
+
     s->asr->start();
     s->running = true;
     s->lock_asr.unlock();

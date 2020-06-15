@@ -72,18 +72,25 @@ void HwCloudRASR::onStart(){
 }
 
 void HwCloudRASR::onError(QAbstractSocket::SocketError error) {
+    auto errorCb = getErrorCallback();
+    if(errorCb)
+        errorCb(ERROR_SOCKET, ws.errorString());
     qDebug()<< ws.errorString();
-    qDebug() << error;
 }
 
 void HwCloudRASR::onConnected() {
     running = true;
     ws.sendTextMessage(startMsg);
+    auto connectCb = getConnectedCallback();
+    if(connectCb)
+        connectCb();
     qDebug() << "WebSocket connected";
 }
 
 void HwCloudRASR::onDisconnected() {
     running = false;
+    auto disconnectCb = getDisconnectedCallback();
+    if(disconnectCb) disconnectCb();
     qDebug() << "WebSocket disconnected";
 
 }
@@ -100,6 +107,11 @@ void HwCloudRASR::onSendAudioMessage(const void *data, unsigned long size){
 void HwCloudRASR::onTextMessageReceived(const QString message) {
     QJsonDocument doc(QJsonDocument::fromJson(message.toUtf8()));
     if(doc["resp_type"].toString() != "RESULT") {
+        if(doc["resp_type"].toString() == "ERROR") {
+            auto errorCb = getErrorCallback();
+            if(errorCb)
+                errorCb(ERROR_API, doc["error_msg"].toString());
+        }
         qDebug() << message;
         return;
     }
@@ -114,7 +126,7 @@ void HwCloudRASR::onTextMessageReceived(const QString message) {
 }
 
 void HwCloudRASR::onResult(QString message, int type) {
-    auto callback = getCallback();
+    auto callback = getResultCallback();
     if(callback)
         callback(message, type);
 }
