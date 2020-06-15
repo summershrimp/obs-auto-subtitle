@@ -57,8 +57,10 @@ void AliNLS::onStart(){
 }
 
 void AliNLS::onError(QAbstractSocket::SocketError error) {
+    auto errorCb = getErrorCallback();
+    if(errorCb)
+        errorCb(ERROR_SOCKET, ws.errorString());
     qDebug()<< ws.errorString();
-    qDebug() << error;
 }
 
 void AliNLS::onConnected() {
@@ -72,11 +74,17 @@ void AliNLS::onConnected() {
     _payload["max_sentence_silence"] = 400;
 
     ws.sendTextMessage(serializeReq());
+    auto connectCb = getConnectedCallback();
+    if (connectCb)
+        connectCb();
     qDebug() << "WebSocket connected";
 }
 
 void AliNLS::onDisconnected() {
     running = false;
+    auto disconnectCb = getDisconnectedCallback();
+    if(disconnectCb)
+        disconnectCb();
     qDebug() << "WebSocket disconnected";
 
 }
@@ -105,6 +113,13 @@ void AliNLS::onTextMessageReceived(const QString message) {
         type = ResultType_End;
         ok = true;
     } else {
+        auto status = doc["status"].toInt();
+        if(status != 20000000) {
+            auto cb = getErrorCallback();
+            if(cb) {
+                cb(ERROR_API, doc["header"]["status_text"].toString());
+            }
+        }
         qDebug() << message;
     }
     if(!ok){
@@ -114,7 +129,7 @@ void AliNLS::onTextMessageReceived(const QString message) {
 }
 
 void AliNLS::onResult(QString message, int type) {
-    auto callback = getCallback();
+    auto callback = getResultCallback();
     if(callback)
         callback(message, type);
 }

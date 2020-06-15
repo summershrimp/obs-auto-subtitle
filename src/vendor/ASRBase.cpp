@@ -25,9 +25,33 @@ ASRBase::ASRBase(QObject *parent) : QObject(parent){
 }
 
 void ASRBase::setResultCallback(ResultCallback cb) {
-    this->cb = std::move(cb);
+    this->resultCallback = std::move(cb);
 }
 
-ResultCallback ASRBase::getCallback() {
-    return cb;
+void ASRBase::setConnectedCallback(ConnectedCallback cb) {
+    this->connectedCallback = std::move(cb);
+}
+
+void ASRBase::setDisconnectedCallback(DisconnectedCallback cb) {
+    this->disconnectedCallback = std::move(cb);
+}
+
+void ASRBase::setErrorCallback(ErrorCallback cb) {
+    this->errorCallback = std::move(cb);
+}
+
+ResultCallback ASRBase::getResultCallback() {
+    return resultCallback;
+}
+
+ConnectedCallback ASRBase::getConnectedCallback() {
+    return connectedCallback;
+}
+
+DisconnectedCallback ASRBase::getDisconnectedCallback() {
+    return disconnectedCallback;
+}
+
+ErrorCallback ASRBase::getErrorCallback() {
+    return errorCallback;
 }

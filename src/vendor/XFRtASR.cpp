@@ -50,17 +50,25 @@ void XFRtASR::onStart(){
 }
 
 void XFRtASR::onError(QAbstractSocket::SocketError error) {
+    auto cb = getErrorCallback();
+    if(cb)
+        cb(ERROR_SOCKET, ws.errorString());
     qDebug()<< ws.errorString();
-    qDebug() << error;
 }
 
 void XFRtASR::onConnected() {
     running = true;
+    auto cb = getConnectedCallback();
+    if (cb)
+        cb();
     qDebug() << "WebSocket connected";
 }
 
 void XFRtASR::onDisconnected() {
     running = false;
+    auto cb = getDisconnectedCallback();
+    if(cb)
+        cb();
     qDebug() << "WebSocket disconnected";
 
 }
@@ -77,6 +85,11 @@ void XFRtASR::onSendAudioMessage(const void *data, unsigned long size){
 void XFRtASR::onTextMessageReceived(const QString message) {
     QJsonDocument doc(QJsonDocument::fromJson(message.toUtf8()));
     if(doc["action"].toString() != "result" || doc["code"].toString() != "0") {
+        if(doc["action"].toString() == "error"){
+            auto errorCb = getErrorCallback();
+            if(errorCb)
+                errorCb(ERROR_API, doc["desc"].toString());
+        }
         qDebug() << message;
         return;
     }
@@ -121,7 +134,7 @@ void XFRtASR::onTextMessageReceived(const QString message) {
 }
 
 void XFRtASR::onResult(QString message, int type) {
-    auto callback = getCallback();
+    auto callback = getResultCallback();
     if(callback)
         callback(message, type);
 }
