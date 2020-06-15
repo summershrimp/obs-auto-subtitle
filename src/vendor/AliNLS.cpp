@@ -113,7 +113,7 @@ void AliNLS::onTextMessageReceived(const QString message) {
         type = ResultType_End;
         ok = true;
     } else {
-        auto status = doc["status"].toInt();
+        auto status = doc["header"]["status"].toInt();
         if(status != 20000000) {
             auto cb = getErrorCallback();
             if(cb) {
