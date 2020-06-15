@@ -40,6 +40,28 @@ install_name_tool \
 echo "[obs-auto-subtitle] Dependencies for obs-auto-subtitle"
 otool -L ./build/obs-auto-subtitle.so
 
+echo "[obs-auto-subtitle] Copy QtWebSockets.framework to here"
+rm -fr ./build/QtWebSockets.framework
+cp -a /usr/local/opt/qt/lib/QtWebSockets.framework ./build/
+chmod -R +w ./build/QtWebSockets.framework
+
+echo "[obs-auto-subtitle] Modifying QtWebSockets.framework"
+install_name_tool \
+  -id @executable_path/../Frameworks/QtWebSockets.framework/Versions/5/QtWebSockets \
+  ./build/QtWebSockets.framework/Versions/5/QtWebSockets
+
+install_name_tool \
+  -change /usr/local/Cellar/qt/5.14.1/lib/QtCore.framework/Versions/5/QtCore \
+  @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore \
+  -change /usr/local/Cellar/qt/5.14.1/lib/QtNetwork.framework/Versions/5/QtNetwork \
+  @executable_path/../Frameworks/QtNetwork.framework/QtNetwork/5/QtCore \
+  ./build/QtWebSockets.framework/Versions/5/QtWebSockets
+
+# Check if replacement worked
+echo "[obs-auto-subtitle] Dependencies for QtWebSockets.framework"
+otool -L ./build/QtWebSockets.framework/Versions/5/QtWebSockets
+
+
 if [[ "$RELEASE_MODE" == "True" ]]; then
 	echo "[obs-auto-subtitle] Signing plugin binary: obs-auto-subtitle.so"
 	codesign --sign "$CODE_SIGNING_IDENTITY" ./build/obs-auto-subtitle.so

@@ -15,7 +15,87 @@
 					<array>
 						<dict>
 							<key>CHILDREN</key>
-							<array/>
+							<array>
+								<dict>
+									<key>CHILDREN</key>
+									<array>
+										<dict>
+											<key>CHILDREN</key>
+											<array>
+												<dict>
+													<key>CHILDREN</key>
+													<array>
+														<dict>
+															<key>BUNDLE_CAN_DOWNGRADE</key>
+															<false/>
+															<key>BUNDLE_POSTINSTALL_PATH</key>
+															<dict>
+																<key>PATH_TYPE</key>
+																<integer>0</integer>
+															</dict>
+															<key>BUNDLE_PREINSTALL_PATH</key>
+															<dict>
+																<key>PATH_TYPE</key>
+																<integer>0</integer>
+															</dict>
+															<key>CHILDREN</key>
+															<array/>
+															<key>GID</key>
+															<integer>80</integer>
+															<key>PATH</key>
+															<string>../build/QtWebSockets.framework</string>
+															<key>PATH_TYPE</key>
+															<integer>1</integer>
+															<key>PERMISSIONS</key>
+															<integer>493</integer>
+															<key>TYPE</key>
+															<integer>3</integer>
+															<key>UID</key>
+															<integer>0</integer>
+														</dict>
+													</array>
+													<key>GID</key>
+													<integer>80</integer>
+													<key>PATH</key>
+													<string>Frameworks</string>
+													<key>PATH_TYPE</key>
+													<integer>2</integer>
+													<key>PERMISSIONS</key>
+													<integer>509</integer>
+													<key>TYPE</key>
+													<integer>2</integer>
+													<key>UID</key>
+													<integer>0</integer>
+												</dict>
+											</array>
+											<key>GID</key>
+											<integer>80</integer>
+											<key>PATH</key>
+											<string>Contents</string>
+											<key>PATH_TYPE</key>
+											<integer>2</integer>
+											<key>PERMISSIONS</key>
+											<integer>509</integer>
+											<key>TYPE</key>
+											<integer>2</integer>
+											<key>UID</key>
+											<integer>0</integer>
+										</dict>
+									</array>
+									<key>GID</key>
+									<integer>80</integer>
+									<key>PATH</key>
+									<string>OBS.app</string>
+									<key>PATH_TYPE</key>
+									<integer>2</integer>
+									<key>PERMISSIONS</key>
+									<integer>509</integer>
+									<key>TYPE</key>
+									<integer>2</integer>
+									<key>UID</key>
+									<integer>0</integer>
+								</dict>
+							</array>
 							<key>GID</key>
 							<integer>80</integer>
 							<key>PATH</key>
@@ -757,15 +837,7 @@
 							<key>SECONDARY_VALUE</key>
 							<string></string>
 							<key>VALUE</key>
-							<string>Your processor is not supported by the NDI library required for obs-auto-subtitle to function.</string>
-						</dict>
-						<dict>
-							<key>LANGUAGE</key>
-							<string>French</string>
-							<key>SECONDARY_VALUE</key>
-							<string></string>
-							<key>VALUE</key>
-							<string>Votre processeur n'est pas supporté par la bibliothèque NDI, nécessaire au fonctionnement du plugin obs-auto-subtitle.</string>
+							<string>Your processor is not supported for obs-auto-subtitle to function.</string>
 						</dict>
 					</array>
 					<key>NAME</key>
