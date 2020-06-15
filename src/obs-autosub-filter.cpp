@@ -119,8 +119,9 @@ const char* autosub_filter_getname(void* data)
 static bool add_sources(void *data, obs_source_t *source)
 {
     obs_property_t *sources = (obs_property_t *)data;
-
-    if(strcmp(obs_source_get_id(source), "text_ft2_source_v2") != 0){
+    auto source_id = obs_source_get_id(source);
+    if(strcmp(source_id, "text_ft2_source_v2") != 0 &&
+            strcmp(source_id, "text_gdiplus_v2") != 0){
         return true;
     }
 
