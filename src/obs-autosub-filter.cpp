@@ -457,7 +457,7 @@ void autosub_filter_destroy(void* data)
 struct obs_audio_data * autosub_filter_audio(void *data, struct obs_audio_data *audio) {
     autosub_filter *s = (autosub_filter*)data;
 
-    if(audio->frames == 0 || !s->running)
+    if(audio->frames == 0 || !s->running || s->resampler == nullptr)
         return audio;
 
     uint8_t *output[MAX_AV_PLANES];
