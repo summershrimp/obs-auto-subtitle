@@ -149,7 +149,6 @@ QUrl XFRtASR::buildQuery() {
     ts = QString::number(time(NULL));
     QString baseString = appId + ts;
     QString signData = QCryptographicHash::hash(baseString.toLocal8Bit(), QCryptographicHash::Md5).toHex();
-    qDebug() <<signData <<apiKey;
     signa = QMessageAuthenticationCode::hash(signData.toLocal8Bit(), apiKey.toLocal8Bit(), QCryptographicHash::Sha1)
                 .toBase64();
     QUrl url(XFYUN_RTASR_URL);

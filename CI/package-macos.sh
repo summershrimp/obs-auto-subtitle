@@ -32,8 +32,8 @@ install_name_tool \
 		@executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore \
 	-change /usr/local/opt/qt/lib/QtNetwork.framework/Versions/5/QtNetwork \
 		@executable_path/../Frameworks/QtNetwork.framework/Versions/5/QtNetwork \
-	-change /usr/local/opt/qt/lib/QtNetwork.framework/Versions/5/QtWebSockets \
-		@executable_path/../Frameworks/QtNetwork.framework/Versions/5/QtWebSockets \
+	-change /usr/local/opt/qt/lib/QtWebSockets.framework/Versions/5/QtWebSockets \
+		@executable_path/../Frameworks/QtWebSockets.framework/Versions/5/QtWebSockets \
 	./build/obs-auto-subtitle.so
 
 # Check if replacement worked
