@@ -333,6 +333,7 @@ void autosub_filter_update(void* data, obs_data_t* settings)
             break;
         case SP_Aliyun:
             s->asr = new AliNLS(s->alinls.appKey, s->alinls.token);
+            break;
         default:
             blog(LOG_WARNING, "Unsupported ASR provider id: %d", s->provider);
             break;
