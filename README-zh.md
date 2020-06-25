@@ -46,6 +46,14 @@ https://nls-portal.console.aliyun.com/overview
 ![](./images/aliyun-nls-appkey.png)
 
 
-### 自动化构建
+## 交流群
+
+Telegram: https://t.me/joinchat/BbK1thHn4aNXH319h61Spw
+
+QQ:
+
+![QQ](./images/qq-group.png)
+
+## 自动化构建
 [![Build Status](https://xm1994.visualstudio.com/obs-auto-subtitle/_apis/build/status/summershrimp.obs-auto-subtitle?branchName=master)](https://xm1994.visualstudio.com/obs-auto-subtitle/_build/latest?definitionId=1&branchName=master)
 

@@ -17,6 +17,15 @@ Binaries for Windows, and macOS are available in the [Releases](https://github.c
 ## Usage
 Please read Chinese README.
 
-### Automated Builds
+## Users group
+
+Telegram: https://t.me/joinchat/BbK1thHn4aNXH319h61Spw
+
+QQ:
+
+![QQ](./images/qq-group.png)
+
+
+## Automated Builds
 [![Build Status](https://xm1994.visualstudio.com/obs-auto-subtitle/_apis/build/status/summershrimp.obs-auto-subtitle?branchName=master)](https://xm1994.visualstudio.com/obs-auto-subtitle/_build/latest?definitionId=1&branchName=master)
 
