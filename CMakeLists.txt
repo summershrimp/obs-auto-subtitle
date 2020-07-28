@@ -101,16 +101,6 @@ if(WIN32)
 				"$<TARGET_FILE:obs-auto-subtitle>"
 				"${RELEASE_DIR}/obs-plugins/${OBS_ARCH_NAME}")
 
-		COMMAND if $<CONFIG:Release>==1 (
-			"${CMAKE_COMMAND}" -E copy
-				"$<TARGET_FILE:Qt5::Network>"
-				"${RELEASE_DIR}/bin/${OBS_ARCH_NAME}")
-
-		COMMAND if $<CONFIG:Release>==1 (
-			"${CMAKE_COMMAND}" -E copy
-				"$<TARGET_FILE:Qt5::WebSockets>"
-				"${RELEASE_DIR}/bin/${OBS_ARCH_NAME}")
-
 			# If config is RelWithDebInfo, package release files
 		COMMAND if $<CONFIG:RelWithDebInfo>==1 (
 			"${CMAKE_COMMAND}" -E make_directory
@@ -127,16 +117,6 @@ if(WIN32)
 			"${CMAKE_COMMAND}" -E copy
 				"$<TARGET_FILE:obs-auto-subtitle>"
 				"${RELEASE_DIR}/obs-plugins/${OBS_ARCH_NAME}")
-
-		COMMAND if $<CONFIG:RelWithDebInfo>==1 (
-			"${CMAKE_COMMAND}" -E copy
-				"$<TARGET_FILE:Qt5::Network>"
-				"${RELEASE_DIR}/bin/${OBS_ARCH_NAME}")
-
-		COMMAND if $<CONFIG:RelWithDebInfo>==1 (
-			"${CMAKE_COMMAND}" -E copy
-				"$<TARGET_FILE:Qt5::WebSockets>"
-				"${RELEASE_DIR}/bin/${OBS_ARCH_NAME}")
 
 			COMMAND if $<CONFIG:RelWithDebInfo>==1 (
 			"${CMAKE_COMMAND}" -E copy

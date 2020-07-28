@@ -36,7 +36,6 @@ HwCloudRASR::HwCloudRASR(const QString &project_id, const QString &token, QObjec
     connect(&ws, &QWebSocket::connected, this, &HwCloudRASR::onConnected);
     connect(&ws, &QWebSocket::disconnected, this, &HwCloudRASR::onDisconnected);
     connect(&ws, &QWebSocket::textMessageReceived, this, &HwCloudRASR::onTextMessageReceived);
-    connect(this, &ASRBase::sendAudioMessage, this, &HwCloudRASR::onSendAudioMessage);
     connect(this, &HwCloudRASR::haveResult, this, &HwCloudRASR::onResult);
     connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(onError(QAbstractSocket::SocketError)));
 
@@ -79,12 +78,13 @@ void HwCloudRASR::onError(QAbstractSocket::SocketError error) {
 }
 
 void HwCloudRASR::onConnected() {
-    running = true;
     ws.sendTextMessage(startMsg);
     auto connectCb = getConnectedCallback();
     if(connectCb)
         connectCb();
     qDebug() << "WebSocket connected";
+    running = true;
+    connect(this, &ASRBase::sendAudioMessage, this, &HwCloudRASR::onSendAudioMessage);
 }
 
 void HwCloudRASR::onDisconnected() {
