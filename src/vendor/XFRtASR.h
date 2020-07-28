@@ -25,7 +25,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #include "ASRBase.h"
 
-#define XFYUN_RTASR_URL "ws://rtasr.xfyun.cn/v1/ws"
+#define XFYUN_RTASR_URL "wss://rtasr.xfyun.cn/v1/ws"
 #define XFYUN_RTASR_GOODBYE "{\"end\": true}"
 
 class XFRtASR : public ASRBase {

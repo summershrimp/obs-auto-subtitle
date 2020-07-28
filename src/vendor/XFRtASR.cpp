@@ -37,7 +37,6 @@ XFRtASR::XFRtASR(const QString &appId, const QString &apiKey, QObject *parent)  
     connect(&ws, &QWebSocket::connected, this, &XFRtASR::onConnected);
     connect(&ws, &QWebSocket::disconnected, this, &XFRtASR::onDisconnected);
     connect(&ws, &QWebSocket::textMessageReceived, this, &XFRtASR::onTextMessageReceived);
-    connect(this, &ASRBase::sendAudioMessage, this, &XFRtASR::onSendAudioMessage);
     connect(this, &XFRtASR::haveResult, this, &XFRtASR::onResult);
     connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(onError(QAbstractSocket::SocketError)));
 
@@ -57,11 +56,12 @@ void XFRtASR::onError(QAbstractSocket::SocketError error) {
 }
 
 void XFRtASR::onConnected() {
-    running = true;
     auto cb = getConnectedCallback();
     if (cb)
         cb();
     qDebug() << "WebSocket connected";
+    running = true;
+    connect(this, &ASRBase::sendAudioMessage, this, &XFRtASR::onSendAudioMessage);
 }
 
 void XFRtASR::onDisconnected() {

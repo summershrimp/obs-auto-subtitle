@@ -35,7 +35,6 @@ AliNLS::AliNLS(const QString &appKey, const QString &token, QObject *parent)
     connect(&ws, &QWebSocket::connected, this, &AliNLS::onConnected);
     connect(&ws, &QWebSocket::disconnected, this, &AliNLS::onDisconnected);
     connect(&ws, &QWebSocket::textMessageReceived, this, &AliNLS::onTextMessageReceived);
-    connect(this, &ASRBase::sendAudioMessage, this, &AliNLS::onSendAudioMessage);
     connect(this, &AliNLS::haveResult, this, &AliNLS::onResult);
     connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(onError(QAbstractSocket::SocketError)));
     task_id = QUuid::createUuid().toRfc4122().toHex();
@@ -64,7 +63,6 @@ void AliNLS::onError(QAbstractSocket::SocketError error) {
 }
 
 void AliNLS::onConnected() {
-    running = true;
     _header["name"] = "StartTranscription";
     _payload["sample_rate"] = 16000;
     _payload["format"] = "pcm";
@@ -74,9 +72,6 @@ void AliNLS::onConnected() {
     _payload["max_sentence_silence"] = 400;
 
     ws.sendTextMessage(serializeReq());
-    auto connectCb = getConnectedCallback();
-    if (connectCb)
-        connectCb();
     qDebug() << "WebSocket connected";
 }
 
@@ -104,11 +99,19 @@ void AliNLS::onTextMessageReceived(const QString message) {
     bool ok = false;
     QString output;
     int type;
-    if(doc["header"]["name"].toString() == "TranscriptionResultChanged") {
+
+    QString msgName = doc["header"]["name"].toString();
+    if (msgName == "TranscriptionStarted") {
+        connect(this, &ASRBase::sendAudioMessage, this, &AliNLS::onSendAudioMessage);
+        auto connectCb = getConnectedCallback();
+        if (connectCb)
+            connectCb();
+        running = true;
+    } else if(msgName == "TranscriptionResultChanged") {
         output = doc["payload"]["result"].toString();
         type = ResultType_Middle;
         ok = true;
-    } else if (doc["header"]["name"].toString() == "SentenceEnd") {
+    } else if (msgName == "SentenceEnd") {
         output = doc["payload"]["result"].toString();
         type = ResultType_End;
         ok = true;

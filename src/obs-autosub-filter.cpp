@@ -370,16 +370,23 @@ void autosub_filter_update(void* data, obs_data_t* settings)
     });
 
     s->asr->setErrorCallback([=](ErrorType type, QString msg) {
+        static bool prevIsApiError = false;
         blog(LOG_INFO, "Websocket error: %d, %s", type, msg.toStdString().c_str());
         QString errorMsg;
         switch(type){
             case ERROR_API:
                 errorMsg = "API Error";
+                prevIsApiError = true;
                 break;
             case ERROR_SOCKET:
+                if(prevIsApiError) {
+                    return;
+                }
                 errorMsg = "Websocket Error";
+                break;
             default:
                 errorMsg = "Unknown error";
+                break;
         }
         if(!msg.isEmpty()){
             errorMsg = errorMsg  + ": " + msg;
