@@ -117,7 +117,11 @@ void AliNLS::onTextMessageReceived(const QString message) {
         ok = true;
     } else {
         auto status = doc["header"]["status"].toInt();
-        if(status != 20000000) {
+        if(status == 40000004) {
+            running = false;
+            ws.close();
+            emit start();
+        } else if(status != 20000000) {
             auto cb = getErrorCallback();
             if(cb) {
                 cb(ERROR_API, doc["header"]["status_text"].toString());
