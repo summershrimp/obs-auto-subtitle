@@ -21,6 +21,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <functional>
 #include <QString>
 #include <QObject>
+#include <QMap>
 
 enum ErrorType {
     ERROR_NOERROR = 0,
@@ -49,6 +50,7 @@ public:
     void setErrorCallback(ErrorCallback cb);
     void setConnectedCallback(ConnectedCallback cb);
     void setDisconnectedCallback(DisconnectedCallback cb);
+    void setParam(QString key, QString value);
     virtual ~ASRBase(){};
 
 protected:
@@ -56,6 +58,7 @@ protected:
     ErrorCallback getErrorCallback();
     ConnectedCallback getConnectedCallback();
     DisconnectedCallback getDisconnectedCallback();
+    QMap<QString, QString> params;
 
 signals:
     void sendAudioMessage(const void *, unsigned long);

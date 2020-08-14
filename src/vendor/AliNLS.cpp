@@ -66,6 +66,7 @@ void AliNLS::onConnected() {
     _header["name"] = "StartTranscription";
     _payload["sample_rate"] = 16000;
     _payload["format"] = "pcm";
+    _payload["enable_ignore_sentence_timeout"] = true;
     _payload["enable_inverse_text_normalization"] = true;
     _payload["enable_intermediate_result"] = true;
     _payload["enable_punctuation_prediction"] = false;
