@@ -156,8 +156,12 @@ QUrl XFRtASR::buildQuery() {
     query.addQueryItem("appid", appId);
     query.addQueryItem("ts", ts);
     query.addQueryItem("signa", signa);
-    query.addQueryItem("punc", "0");
-    query.addQueryItem("pd", "tech");
+    if(params.find("punc") != params.end()){
+        query.addQueryItem("punc", params["punc"]);
+    }
+    if(params.find("pd") != params.end()){
+        query.addQueryItem("pd", params["pd"]);
+    }
     url.setQuery(query);
     qDebug() << url;
     return url;

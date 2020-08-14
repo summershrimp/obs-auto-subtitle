@@ -24,6 +24,10 @@ ASRBase::ASRBase(QObject *parent) : QObject(parent){
     connect(this, &ASRBase::stop, this, &ASRBase::onStop);
 }
 
+void ASRBase::setParam(QString key, QString value) {
+    params[key] = value;
+}
+
 void ASRBase::setResultCallback(ResultCallback cb) {
     this->resultCallback = std::move(cb);
 }

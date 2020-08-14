@@ -47,6 +47,18 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define PROP_XF_APIKEY "autosub_filter_xf_apikey"
 #define T_APIKEY obs_module_text("AutoSub.APIKEY")
 
+#define PROP_XF_PUNC "autosub_filter_xf_punc"
+#define T_XF_PUNC obs_module_text("AutoSub.XF.Punc")
+
+#define PROP_XF_PD "autosub_filter_xf_pd"
+#define T_XF_PD obs_module_text("AutoSub.XF.PD")
+#define T_XF_PD_NONE obs_module_text("AutoSub.XF.PD.None")
+#define T_XF_PD_COURT obs_module_text("AutoSub.XF.PD.Court")
+#define T_XF_PD_EDU obs_module_text("AutoSub.XF.PD.Edu")
+#define T_XF_PD_FINANCE obs_module_text("AutoSub.XF.PD.Finance")
+#define T_XF_PD_MEDICAL obs_module_text("AutoSub.XF.PD.Medical")
+#define T_XF_PD_TECH obs_module_text("AutoSub.XF.PD.Tech")
+
 #define PROP_HWCLOUD_PROJID "autosub_filter_hwcloud_proj_id"
 #define T_PROJECT_ID obs_module_text("AutoSub.ProjectId")
 
@@ -88,6 +100,8 @@ struct autosub_filter
     struct {
         QString appId;
         QString apiKey;
+        bool punc;
+        QString pd;
     }xfyun;
 
     struct {
@@ -148,6 +162,8 @@ static bool provider_modified(obs_properties_t *props,
     int cur_provider = obs_data_get_int(settings, PROP_PROVIDER);
     PROPERTY_SET_UNVISIBLE(props, PROP_XF_APPID);
     PROPERTY_SET_UNVISIBLE(props, PROP_XF_APIKEY);
+    PROPERTY_SET_UNVISIBLE(props, PROP_XF_PUNC);
+    PROPERTY_SET_UNVISIBLE(props, PROP_XF_PD);
     PROPERTY_SET_UNVISIBLE(props, PROP_HWCLOUD_PROJID);
     PROPERTY_SET_UNVISIBLE(props, PROP_HWCLOUD_TOKEN);
     PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_APPKEY);
@@ -161,6 +177,8 @@ static bool provider_modified(obs_properties_t *props,
         case SP_Xfyun:
             PROPERTY_SET_VISIBLE(props, PROP_XF_APPID);
             PROPERTY_SET_VISIBLE(props, PROP_XF_APIKEY);
+            PROPERTY_SET_VISIBLE(props, PROP_XF_PUNC);
+            PROPERTY_SET_VISIBLE(props, PROP_XF_PD);
             break;
         case SP_Aliyun:
             PROPERTY_SET_VISIBLE(props, PROP_ALINLS_APPKEY);
@@ -202,17 +220,32 @@ obs_properties_t* autosub_filter_getproperties(void* data)
 
     obs_property_set_modified_callback(providers, provider_modified);
 
+    //XFYun
     auto t = obs_properties_add_text(props, PROP_XF_APPID, T_APPID, OBS_TEXT_DEFAULT);
     obs_property_set_visible(t, false);
     t = obs_properties_add_text(props, PROP_XF_APIKEY, T_APIKEY, OBS_TEXT_DEFAULT);
     obs_property_set_visible(t, false);
 
+    t = obs_properties_add_bool(props, PROP_XF_PUNC, T_XF_PUNC);
+    obs_property_set_visible(t, false);
+    t = obs_properties_add_list(props, PROP_XF_PD, T_XF_PD, OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+    obs_property_set_visible(t, false);
+    obs_property_list_add_string(t, T_XF_PD_NONE, "none");
+    obs_property_list_add_string(t, T_XF_PD_COURT, "court");
+    obs_property_list_add_string(t, T_XF_PD_EDU, "edu");
+    obs_property_list_add_string(t, T_XF_PD_FINANCE, "finance");
+    obs_property_list_add_string(t, T_XF_PD_MEDICAL, "medical");
+    obs_property_list_add_string(t, T_XF_PD_TECH, "tech");
 
+
+    //HWCloud
     t = obs_properties_add_text(props, PROP_HWCLOUD_PROJID, T_PROJECT_ID, OBS_TEXT_DEFAULT);
     obs_property_set_visible(t, false);
     t = obs_properties_add_text(props, PROP_HWCLOUD_TOKEN, T_TOKEN, OBS_TEXT_MULTILINE);
     obs_property_set_visible(t, false);
 
+
+    //AliNLS
     t = obs_properties_add_text(props, PROP_ALINLS_APPKEY, T_APPKEY, OBS_TEXT_DEFAULT);
     obs_property_set_visible(t, false);
     t = obs_properties_add_text(props, PROP_ALINLS_TOKEN, T_TOKEN, OBS_TEXT_DEFAULT);
@@ -262,11 +295,14 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         s->provider = provider;
         s->refresh = true;
     }
-    const char *appid, *apikey, *project_id, *token, *appkey;
+    const char *appid, *apikey, *project_id, *token, *appkey ,*pd;
+    bool punc;
     switch (s->provider) {
         case SP_Xfyun:
             appid = obs_data_get_string(settings, PROP_XF_APPID);
             apikey = obs_data_get_string(settings, PROP_XF_APIKEY);
+            punc = obs_data_get_string(settings, PROP_XF_PUNC);
+            pd = obs_data_get_string(settings, PROP_XF_PD);
             if(strcmp(appid, "") == 0 || strcmp(apikey, "") == 0) {
                 s->refresh = false;
                 break;
@@ -277,6 +313,8 @@ void autosub_filter_update(void* data, obs_data_t* settings)
             }
             s->xfyun.appId = appid;
             s->xfyun.apiKey = apikey;
+            s->xfyun.punc = punc;
+            s->xfyun.pd = pd;
             s->refresh = true;
             qDebug() << "Xunfei: " << s->xfyun.appId << s->xfyun.apiKey;
             break;
@@ -327,6 +365,12 @@ void autosub_filter_update(void* data, obs_data_t* settings)
     switch(s->provider){
         case SP_Xfyun:
             s->asr = new XFRtASR(s->xfyun.appId, s->xfyun.apiKey);
+            if(s->xfyun.pd != "none") {
+                s->asr->setParam("pd", s->xfyun.pd);
+            }
+            if(!s->xfyun.punc) {
+                s->asr->setParam("punc", "0");
+            }
             break;
         case SP_Hwcloud:
             s->asr = new HwCloudRASR(s->hwcloud.project_id, s->hwcloud.token);
