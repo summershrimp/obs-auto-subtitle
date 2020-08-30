@@ -16,7 +16,7 @@ Windows/macOS 系统的安装包可以从 [Releases](https://github.com/summersh
 
 ## 使用说明
 ### 创建文字源
-创建 **文本（Freetype2）** 文字源（Windows版OBS在过时源中），并调整相关设置，推荐设置最大宽度为画布宽度。推荐修改源名称。
+创建 **文本（GDI+/Freetype2）** 文字源 ~~**文本（Freetype2）** 文字源（Windows版OBS在过时源中）~~，并调整相关设置。推荐设置最大宽度为画布宽度 （仅freetype），推荐修改源名称。
 
 ![](./images/obs-source-text.png)
 
