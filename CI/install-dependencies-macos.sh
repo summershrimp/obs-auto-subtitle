@@ -34,19 +34,28 @@ for DEPENDENCY in ${BREW_DEPENDENCIES}; do
     fi
 done
 
-# qtndis deps
-echo "[obs-auto-subtitle] Installing obs-auto-subtitle dependency 'QT 5.10.1'.."
-# =!= NOTICE =!=
-# When building QT5 from sources on macOS 10.13+, use local qt5 formula:
-# brew install ./CI/macos/qt.rb
-# Pouring from the bottle is much quicker though, so use bottle for now.
-# =!= NOTICE =!=
+# qt deps
 
-brew install https://gist.githubusercontent.com/DDRBoxman/9c7a2b08933166f4b61ed9a44b242609/raw/ef4de6c587c6bd7f50210eccd5bd51ff08e6de13/qt.rb
+install_qt_deps() {
+    echo "[obs-ssp] Installing obs-ssp dependency 'QT 5.14.1'.."
+    echo "Download..."
+    curl --progress-bar -L -C - -O https://github.com/obsproject/obs-deps/releases/download/${2}/macos-qt-${1}-${2}.tar.gz
+    echo "Unpack..."
+    tar -xf ./macos-qt-${1}-${2}.tar.gz -C /tmp
+    xattr -r -d com.apple.quarantine /tmp/obsdeps
+}
 
-# Pin this version of QT5 to avoid `brew upgrade`
-# upgrading it to incompatible version
-brew pin qt
+install_qt_deps 5.15.2 2020-12-11
+
+install_obs_deps() {
+    echo "Setting up pre-built macOS OBS dependencies v${1}"
+    echo "Download..."
+    curl --progress-bar -L -C - -O https://github.com/obsproject/obs-deps/releases/download/${1}/macos-deps-${1}.tar.gz
+    echo "Unpack..."
+    tar -xf ./macos-deps-${1}.tar.gz -C /tmp
+}
+
+install_obs_deps 2020-12-11
 
 # Fetch and install Packages app
 # =!= NOTICE =!=

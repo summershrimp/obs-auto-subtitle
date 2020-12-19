@@ -22,11 +22,6 @@ if [ "${HAS_GIT}" = "" ]; then
     echo "[obs-auto-subtitle - Error] Git not installed - please install Xcode developer tools or via Homebrew."
     exit 1
 fi
-if [ ! -d obsdeps ]; then
-    echo "[obs-auto-subtitle] Downloading and unpacking OBS dependencies"
-    wget -c --retry-connrefused --waitretry=1 https://obs-nightly.s3.amazonaws.com/osx-deps-2018-08-09.tar.gz
-    tar -xf ./osx-deps-2018-08-09.tar.gz -C .
-fi
 
 # Build obs-studio
 if [ ! -d obs-studio/.git ]; then
@@ -49,6 +44,6 @@ cmake .. \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=10.11 \
     -DDISABLE_PLUGINS=true \
     -DENABLE_SCRIPTING=0 \
-    -DDepsPath=$(pwd)/../../obsdeps \
-    -DCMAKE_PREFIX_PATH=/usr/local/opt/qt/lib/cmake \
+    -DDepsPath=/tmp/obsdeps \
+    -DQTDIR=/tmp/obsdeps \
 && make -j4

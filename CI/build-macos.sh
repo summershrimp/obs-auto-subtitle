@@ -24,11 +24,11 @@ rm -fr build
 mkdir -p build && cd build
 cmake .. \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=10.11 \
-    -DQTDIR=/usr/local/opt/qt \
+    -DQTDIR="/tmp/obsdeps" \
     -DLIBOBS_INCLUDE_DIR=../../obs-studio/libobs \
     -DLIBOBS_LIB=../../obs-studio/libobs \
     -DOBS_FRONTEND_LIB="$(pwd)/../../obs-studio/build/UI/obs-frontend-api/libobs-frontend-api.dylib" \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_INSTALL_PREFIX=/usr \
-    -DFFmpegPath="$(pwd)/../../obsdeps" \
+    -DFFmpegPath="/tmp/obsdeps" \
 && make -j4
