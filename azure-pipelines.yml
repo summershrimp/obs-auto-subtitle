@@ -22,8 +22,8 @@ jobs:
     DepsPath32: '$(DepsBasePath)\win32'
     DepsPath64: '$(DepsBasePath)\win64'
     QtBaseDir: 'D:\QtDep'
-    QTDIR32: '$(QtBaseDir)\5.10.1\msvc2017'
-    QTDIR64: '$(QtBaseDir)\5.10.1\msvc2017_64'
+    QTDIR32: '$(QtBaseDir)\5.15.2\msvc2019'
+    QTDIR64: '$(QtBaseDir)\5.15.2\msvc2019_64'
     OBSPath: 'D:\obs-studio'
   steps:
     - checkout: self
