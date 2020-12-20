@@ -1,5 +1,7 @@
-curl -o QWebsockets-ssl-win64.zip -kLO https://github.com/summershrimp/obs-auto-subtitle/releases/download/0.2.1/QWebsockets-ssl-win64.zip -f --retry 5 -C -
-7z x QWebsockets-ssl-win64.zip -orelease\bin\64bit
+copy %QTDIR64%\bin\Qt5Network.dll  release\bin\64bit\Qt5Network.dll
+copy %QTDIR64%\bin\Qt5WebSockets.dll  release\bin\64bit\Qt5WebSockets.dll
+copy %QtBaseDir%\Tools\OpenSSL\Win_x64\bin\libcrypto-1_1-x64.dll release\bin\64bit\libcrypto-1_1-x64.dll
+copy %QtBaseDir%\Tools\OpenSSL\Win_x64\bin\libssl-1_1-x64.dll release\bin\64bit\libssl-1_1-x64.dll
 
 mkdir package
 cd package
