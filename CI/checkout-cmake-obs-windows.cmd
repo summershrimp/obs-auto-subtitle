@@ -33,6 +33,9 @@ if exist %OBSPath% (
 	set /p OBSLatestTagPrePull=<"%OBSPath%\latest-obs-studio-tag-pre-pull.txt"
 	git checkout master
 	git pull
+	if defined OBSTargetVersion (
+		git checkout %OBSTargetVersion%
+	)
 	git describe --tags --abbrev=0 --exclude="*-rc*" > "%OBSPath%\latest-obs-studio-tag-post-pull.txt"
 	set /p OBSLatestTagPostPull=<"%OBSPath%\latest-obs-studio-tag-post-pull.txt"
 	set /p OBSLatestTag=<"%OBSPath%\latest-obs-studio-tag-post-pull.txt"

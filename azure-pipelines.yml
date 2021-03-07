@@ -25,6 +25,7 @@ jobs:
     QTDIR32: '$(QtBaseDir)\5.15.2\msvc2019'
     QTDIR64: '$(QtBaseDir)\5.15.2\msvc2019_64'
     OBSPath: 'D:\obs-studio'
+    OBSTargetVersion: '26.1.0'
   steps:
     - checkout: self
       submodules: true
