@@ -70,6 +70,13 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #define PROP_ALINLS_TOKEN "autosub_filter_alinls_token"
 
+#define PROP_ALINLS_PUNC "autosub_filter_alinls_punc"
+#define T_ALINLS_PUNC obs_module_text("AutoSub.AliNLS.Punc")
+#define PROP_ALINLS_ITN "autosub_filter_alinls_itn"
+#define T_ALINLS_ITN obs_module_text("AutoSub.AliNLS.ITN")
+#define PROP_ALINLS_INTRESULT "autosub_filter_alinls_InterResult"
+#define T_ALINLS_INTRESULT obs_module_text("AutoSub.AliNLS.InterResult")
+
 #define PROP_TARGET_TEXT_SOURCE "autosub_filter_target_source"
 #define T_TARGET_TEXT_SOURCE obs_module_text("AutoSub.Target.Source")
 
@@ -112,6 +119,9 @@ struct autosub_filter
     struct {
         QString appKey;
         QString token;
+        bool punc;
+        bool itn;
+        bool int_result;
     }alinls;
 
     int refresh;
@@ -168,6 +178,9 @@ static bool provider_modified(obs_properties_t *props,
     PROPERTY_SET_UNVISIBLE(props, PROP_HWCLOUD_TOKEN);
     PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_APPKEY);
     PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_TOKEN);
+    PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_PUNC);
+    PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_ITN);
+    PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_INTRESULT);
 
     switch(cur_provider) {
         case SP_Hwcloud:
@@ -183,6 +196,9 @@ static bool provider_modified(obs_properties_t *props,
         case SP_Aliyun:
             PROPERTY_SET_VISIBLE(props, PROP_ALINLS_APPKEY);
             PROPERTY_SET_VISIBLE(props, PROP_ALINLS_TOKEN);
+            PROPERTY_SET_VISIBLE(props, PROP_ALINLS_PUNC);
+            PROPERTY_SET_VISIBLE(props, PROP_ALINLS_ITN);
+            PROPERTY_SET_VISIBLE(props, PROP_ALINLS_INTRESULT);
             break;
         case SP_Sogou:
             break;
@@ -250,7 +266,12 @@ obs_properties_t* autosub_filter_getproperties(void* data)
     obs_property_set_visible(t, false);
     t = obs_properties_add_text(props, PROP_ALINLS_TOKEN, T_TOKEN, OBS_TEXT_DEFAULT);
     obs_property_set_visible(t, false);
-
+    t = obs_properties_add_bool(props, PROP_ALINLS_PUNC, T_ALINLS_PUNC);
+    obs_property_set_visible(t, false);
+    t = obs_properties_add_bool(props, PROP_ALINLS_ITN, T_ALINLS_ITN);
+    obs_property_set_visible(t, false);
+    t = obs_properties_add_bool(props, PROP_ALINLS_INTRESULT, T_ALINLS_INTRESULT);
+    obs_property_set_visible(t, false);
 
     return props;
 }
@@ -295,13 +316,13 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         s->provider = provider;
         s->refresh = true;
     }
-    const char *appid, *apikey, *project_id, *token, *appkey ,*pd;
-    bool punc;
+    const char *appid, *apikey, *project_id, *token, *appkey, *pd;
+    bool punc, inter_result, itn;
     switch (s->provider) {
         case SP_Xfyun:
             appid = obs_data_get_string(settings, PROP_XF_APPID);
             apikey = obs_data_get_string(settings, PROP_XF_APIKEY);
-            punc = obs_data_get_string(settings, PROP_XF_PUNC);
+            punc = obs_data_get_bool(settings, PROP_XF_PUNC);
             pd = obs_data_get_string(settings, PROP_XF_PD);
             if(strcmp(appid, "") == 0 || strcmp(apikey, "") == 0) {
                 s->refresh = false;
@@ -337,6 +358,9 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         case SP_Aliyun:
             appkey = obs_data_get_string(settings, PROP_ALINLS_APPKEY);
             token = obs_data_get_string(settings, PROP_ALINLS_TOKEN);
+            punc = obs_data_get_bool(settings, PROP_ALINLS_PUNC);
+            itn = obs_data_get_bool(settings, PROP_ALINLS_ITN);
+            inter_result = obs_data_get_bool(settings, PROP_ALINLS_INTRESULT);
             if(strcmp(appkey, "") == 0 || strcmp(token, "") == 0) {
                 s->refresh = false;
                 break;
@@ -347,6 +371,9 @@ void autosub_filter_update(void* data, obs_data_t* settings)
             }
             s->alinls.appKey = appkey;
             s->alinls.token = token;
+            s->alinls.punc = punc;
+            s->alinls.itn = itn;
+            s->alinls.int_result = inter_result;
             s->refresh = true;
             qDebug() << "AliNLS: " << s->alinls.appKey << s->alinls.token;
             break;
@@ -377,6 +404,15 @@ void autosub_filter_update(void* data, obs_data_t* settings)
             break;
         case SP_Aliyun:
             s->asr = new AliNLS(s->alinls.appKey, s->alinls.token);
+            if(s->alinls.punc) {
+                s->asr->setParam("enable_punctuation_prediction", "true");
+            }
+            if(s->alinls.itn) {
+                s->asr->setParam("enable_inverse_text_normalization", "true");
+            }
+            if(s->alinls.int_result) {
+                s->asr->setParam("enable_intermediate_result", "true");
+            }
             break;
         default:
             blog(LOG_WARNING, "Unsupported ASR provider id: %d", s->provider);
@@ -401,6 +437,7 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         auto text_settings = obs_source_get_settings(target);
         obs_data_set_string(text_settings, "text", str.toUtf8().toStdString().c_str());
         obs_source_update(target, text_settings);
+        obs_source_release(target);
     });
 
     s->asr->setResultCallback([=](QString str, int typ){
@@ -530,14 +567,20 @@ static void autosub_filter_tick(void *data, float seconds){
     obs_source_t *target_source = obs_get_source_by_name(s->target_source_name);
     if(s->target_text != nullptr){
         obs_source_t *original_source = obs_weak_source_get_source(s->target_text);
-        if(strcmp(obs_source_get_name(original_source), s->target_source_name) == 0){
-            return ;
+        if (original_source) {
+            if(strcmp(obs_source_get_name(original_source), s->target_source_name) == 0){
+                obs_source_release(original_source);
+                return ;
+            }
+            obs_source_release(original_source);
         }
     }
     s->lock_target_text.lock();
-    if(!target_source) {
+    if (s->target_text) {
+        obs_weak_source_release(s->target_text);
         s->target_text = nullptr;
-    } else {
+    }
+    if(target_source) {
         s->target_text = obs_source_get_weak_source(target_source);
         auto text_settings = obs_source_get_settings(target_source);
         obs_data_set_string(text_settings, "text", "Preparing...");
