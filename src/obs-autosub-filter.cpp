@@ -22,6 +22,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <obs-module.h>
 #include <obs.h>
 #include <util/threading.h>
+#include <util/platform.h>
 #include <chrono>
 #include <QThread>
 #include <media-io/audio-resampler.h>
@@ -101,7 +102,6 @@ struct autosub_filter
     uint32_t channels;
     int max_count;
     bool running;
-    const char *target_source_name;
 
     int provider;
     struct {
@@ -129,9 +129,11 @@ struct autosub_filter
     ASRBase *asr;
     std::mutex lock_asr;
     audio_resampler_t *resampler;
+    std::mutex resampler_update_lock;
 
-    std::mutex lock_target_text;
-    obs_weak_source_t *target_text;
+    const char *text_source_name;
+    std::mutex text_source_update_lock;
+    obs_weak_source_t *text_source;
 };
 
 const char* autosub_filter_getname(void* data)
@@ -212,7 +214,6 @@ static bool provider_modified(obs_properties_t *props,
 
 obs_properties_t* autosub_filter_getproperties(void* data)
 {
-    char nametext[256];
     auto s = (struct autosub_filter*)data;
 
     obs_properties_t* props = obs_properties_create();
@@ -302,12 +303,38 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         AUDIO_FORMAT_FLOAT,
         SPEAKERS_MONO
     };
+    s->resampler_update_lock.lock();
     if(s->resampler != nullptr) {
         audio_resampler_destroy(s->resampler);
         s->resampler = nullptr;
     }
     s->resampler = audio_resampler_create(&resample_output, &resample_input);
-    s->target_source_name = obs_data_get_string(settings, PROP_TARGET_TEXT_SOURCE);
+    s->resampler_update_lock.unlock();
+
+    const char *text_source_name = obs_data_get_string(settings, PROP_TARGET_TEXT_SOURCE);
+    bool valid_text_source = strcmp(text_source_name, "none") != 0;
+	obs_weak_source_t *old_weak_text_source = NULL;
+    s->text_source_update_lock.lock();
+    if (!valid_text_source){
+        if (s->text_source) {
+            old_weak_text_source = s->text_source;
+            s->text_source = NULL;
+        }
+    } else {
+        if(!s->text_source_name ||
+		    strcmp(s->text_source_name, text_source_name) != 0) {
+            if (s->text_source) {
+                old_weak_text_source = s->text_source;
+                s->text_source = NULL;
+			}
+            s->text_source_name = text_source_name;
+        }
+    }
+    s->text_source_update_lock.unlock();
+
+	if (old_weak_text_source) {
+		obs_weak_source_release(old_weak_text_source);
+	}
 
     s->max_count = obs_data_get_int(settings, PROP_MAX_COUNT);
 
@@ -337,7 +364,6 @@ void autosub_filter_update(void* data, obs_data_t* settings)
             s->xfyun.punc = punc;
             s->xfyun.pd = pd;
             s->refresh = true;
-            qDebug() << "Xunfei: " << s->xfyun.appId << s->xfyun.apiKey;
             break;
         case SP_Hwcloud:
             project_id = obs_data_get_string(settings, PROP_HWCLOUD_PROJID);
@@ -353,7 +379,6 @@ void autosub_filter_update(void* data, obs_data_t* settings)
             s->hwcloud.project_id = project_id;
             s->hwcloud.token = token;
             s->refresh = true;
-            qDebug() << "HwCloud: " << s->hwcloud.project_id << s->hwcloud.token;
             break;
         case SP_Aliyun:
             appkey = obs_data_get_string(settings, PROP_ALINLS_APPKEY);
@@ -365,17 +390,11 @@ void autosub_filter_update(void* data, obs_data_t* settings)
                 s->refresh = false;
                 break;
             }
-            if(s->alinls.appKey == appkey && s->alinls.token == token){
-                s->refresh = s->refresh || false;
-                break;
-            }
             s->alinls.appKey = appkey;
             s->alinls.token = token;
             s->alinls.punc = punc;
             s->alinls.itn = itn;
             s->alinls.int_result = inter_result;
-            s->refresh = true;
-            qDebug() << "AliNLS: " << s->alinls.appKey << s->alinls.token;
             break;
     }
 
@@ -424,13 +443,14 @@ void autosub_filter_update(void* data, obs_data_t* settings)
     }
 
     std::function<void(QString)> setText([=](QString str){
-        s->lock_target_text.lock();
-        if(!s->target_text) {
-            s->lock_target_text.unlock();
+        obs_weak_source_t *text_source = nullptr;
+        s->text_source_update_lock.lock();
+        text_source = s->text_source;
+        s->text_source_update_lock.unlock();
+        if(!text_source) {
             return;
         }
-        auto target = obs_weak_source_get_source(s->target_text);
-        s->lock_target_text.unlock();
+        auto target = obs_weak_source_get_source(text_source);
         if(!target){
             return;
         }
@@ -516,7 +536,7 @@ void* autosub_filter_create(obs_data_t* settings, obs_source_t* source)
     s->resampler = nullptr;
     s->asr = nullptr;
     s->running = false;
-    s->target_text = nullptr;
+    s->text_source = nullptr;
     s->provider = SP_Default;
     s->max_count = 0;
 
@@ -539,21 +559,32 @@ void autosub_filter_destroy(void* data)
     s->lock_asr.unlock();
     if(s->resampler) {
         audio_resampler_destroy(s->resampler);
+        s->resampler = nullptr;
     }
+    
+    if(s->text_source){
+        obs_weak_source_release(s->text_source);
+        s->text_source = nullptr;
+    }
+
     delete s;
 }
 
 struct obs_audio_data * autosub_filter_audio(void *data, struct obs_audio_data *audio) {
     autosub_filter *s = (autosub_filter*)data;
 
-    if(audio->frames == 0 || !s->running || s->resampler == nullptr)
+    s->resampler_update_lock.lock();
+    if(audio->frames == 0 || !s->running || s->resampler == nullptr){
+        s->resampler_update_lock.unlock();
         return audio;
+    }
 
     uint8_t *output[MAX_AV_PLANES];
     memset(output, 0, sizeof(output));
     uint32_t out_samples = 0;
     uint64_t ts_offset = 0;
     bool ok = audio_resampler_resample(s->resampler, output, &out_samples, &ts_offset, audio->data, audio->frames);
+    s->resampler_update_lock.unlock();
     if(ok) {
         s->lock_asr.lock();
         emit s->asr->sendAudioMessage(output[0], out_samples * 2);
@@ -563,30 +594,47 @@ struct obs_audio_data * autosub_filter_audio(void *data, struct obs_audio_data *
 }
 
 static void autosub_filter_tick(void *data, float seconds){
+    static int last_time = 0;
     autosub_filter *s = (autosub_filter*)data;
-    obs_source_t *target_source = obs_get_source_by_name(s->target_source_name);
-    if(s->target_text != nullptr){
-        obs_source_t *original_source = obs_weak_source_get_source(s->target_text);
-        if (original_source) {
-            if(strcmp(obs_source_get_name(original_source), s->target_source_name) == 0){
-                obs_source_release(original_source);
-                return ;
-            }
-            obs_source_release(original_source);
+    char *new_name = NULL;
+
+    s->text_source_update_lock.lock();
+
+    if (s->text_source_name && !s->text_source) {
+        uint64_t t = os_gettime_ns();
+
+        if (t - last_time > 3000000000) {
+            new_name = bstrdup(s->text_source_name);
+            last_time = t;
         }
     }
-    s->lock_target_text.lock();
-    if (s->target_text) {
-        obs_weak_source_release(s->target_text);
-        s->target_text = nullptr;
+    
+    s->text_source_update_lock.unlock();
+
+    if (new_name) {
+        obs_source_t *target_source =
+            *new_name ? obs_get_source_by_name(new_name) : NULL;
+        obs_weak_source_t *weak_target_source =
+            target_source ? obs_source_get_weak_source(target_source)
+                    : NULL;
+
+        s->text_source_update_lock.lock();
+
+        if (s->text_source_name &&
+            strcmp(s->text_source_name, new_name) == 0) {
+            s->text_source = weak_target_source;
+            weak_target_source = NULL;
+        }
+
+        s->text_source_update_lock.unlock();
+
+        if (target_source) {
+            obs_weak_source_release(weak_target_source);
+            obs_source_release(target_source);
+        }
+
+        bfree(new_name);
     }
-    if(target_source) {
-        s->target_text = obs_source_get_weak_source(target_source);
-        auto text_settings = obs_source_get_settings(target_source);
-        obs_data_set_string(text_settings, "text", "Preparing...");
-        obs_source_update(target_source, text_settings);
-    }
-    s->lock_target_text.unlock();
 }
 
 struct obs_source_info create_autosub_filter_info()
