@@ -66,10 +66,28 @@ void AliNLS::onConnected() {
     _header["name"] = "StartTranscription";
     _payload["sample_rate"] = 16000;
     _payload["format"] = "pcm";
-    _payload["enable_ignore_sentence_timeout"] = true;
-    _payload["enable_inverse_text_normalization"] = true;
-    _payload["enable_intermediate_result"] = true;
-    _payload["enable_punctuation_prediction"] = false;
+    _payload["enable_ignore_sentence_timeout"] = true; // 忽略单句识别超时
+    auto iter = params.find("enable_inverse_text_normalization"); // ITN，阿拉伯数字
+    if(iter != params.end()) {
+        _payload["enable_inverse_text_normalization"] = iter.value() == "true";
+    } else {
+        _payload["enable_inverse_text_normalization"] = false;
+    }
+
+    iter = params.find("enable_intermediate_result"); // 中间结果
+    if(iter != params.end()) {
+        _payload["enable_intermediate_result"] = iter.value() == "true";
+    } else {
+        _payload["enable_intermediate_result"] = false;
+    }
+
+    iter = params.find("enable_punctuation_prediction"); // 标点符号
+    if(iter != params.end()) {
+        _payload["enable_punctuation_prediction"] = iter.value() == "true";
+    } else {
+        _payload["enable_punctuation_prediction"] = false;
+    }
+
     _payload["max_sentence_silence"] = 400;
 
     ws.sendTextMessage(serializeReq());
