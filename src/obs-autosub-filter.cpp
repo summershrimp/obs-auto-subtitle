@@ -18,6 +18,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #include <string.h>
 #include <functional>
+#include <memory>
 #include <QObject>
 #include <obs-module.h>
 #include <obs.h>
@@ -29,9 +30,11 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 
 #include "obs-auto-subtitle.h"
-#include "vendor/XFRtASR.h"
-#include "vendor/HwCloudRASR.h"
-#include "vendor/AliNLS.h"
+#include "vendor/ASR/XFRtASR.h"
+#include "vendor/ASR/HwCloudRASR.h"
+#include "vendor/ASR/AliNLS.h"
+#include "vendor/Trans/XFTrans.h"
+#include "builder/XFTransBuilder.h"
 
 #define T_FILTER_NAME obs_module_text("AutoSub.FilterName")
 
@@ -47,6 +50,9 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #define PROP_XF_APIKEY "autosub_filter_xf_apikey"
 #define T_APIKEY obs_module_text("AutoSub.APIKEY")
+
+#define PROP_XF_APISECRET "autosub_filter_xf_apisecret"
+#define T_APISECRET obs_module_text("AutoSub.APISECRET")
 
 #define PROP_XF_PUNC "autosub_filter_xf_punc"
 #define T_XF_PUNC obs_module_text("AutoSub.XF.Punc")
@@ -81,6 +87,13 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define PROP_TARGET_TEXT_SOURCE "autosub_filter_target_source"
 #define T_TARGET_TEXT_SOURCE obs_module_text("AutoSub.Target.Source")
 
+#define PROP_TRANS_PROVIDER "autosub_filter_trans_sp"
+#define PROP_TRANS_ENABLED "autosub_filter_enable_trans"
+#define T_TRANS_ENABLE obs_module_text("AutoSub.EnableTrans")
+
+#define PROP_TRANS_TARGET_TEXT_SOURCE "autosub_filter_trans_target_source"
+
+
 using namespace std::placeholders;
 enum ServiceProvider {
     SP_Default = 0,
@@ -94,6 +107,14 @@ enum ServiceProvider {
 #define T_SP_SOGOU obs_module_text("AutoSub.SP.Sogou")
 #define T_SP_ALIYUN obs_module_text("AutoSub.SP.Aliyun")
 
+enum TransServiceProvider {
+    Trans_SP_Default = 0,
+    Trans_SP_Xfyun,
+    Trans_SP_XfNiu
+};
+
+#define T_TRANS_SP_XFYUN obs_module_text("AutoSub.Trans.SP.Xfyun")
+#define T_TRANS_SP_XFNIU obs_module_text("AutoSub.Trans.SP.XfyunNiu")
 
 struct autosub_filter
 {
@@ -134,6 +155,20 @@ struct autosub_filter
     const char *text_source_name = nullptr;
     std::mutex text_source_update_lock;
     obs_weak_source_t *text_source = nullptr;
+    uint64_t text_source_last_update = 0;
+
+    bool enable_trans;
+    int trans_provider;
+
+    XFTransBuilder xfTransBuilder;
+
+    std::shared_ptr<TransBase> translator = nullptr;
+    std::mutex lock_trans;
+
+    const char *trans_source_name = nullptr;
+    std::mutex trans_source_update_lock;
+    obs_weak_source_t *trans_source = nullptr;
+    uint64_t trans_source_last_update = 0;
 };
 
 const char* autosub_filter_getname(void* data)
@@ -210,7 +245,47 @@ static bool provider_modified(obs_properties_t *props,
 
     return true;
 }
+
+static bool translate_provider_modified(void *priv, obs_properties_t *props,
+                            obs_property_t *property,
+                            obs_data_t *settings) {
+    int cur_provider = obs_data_get_int(settings, PROP_TRANS_PROVIDER);
+    auto s = (struct autosub_filter *)priv;
+    s->xfTransBuilder.hideProperties(props);
+    s->xfTransBuilder.setNormalTrans();
+    switch(cur_provider){
+        case Trans_SP_XfNiu:
+            s->xfTransBuilder.setNiuTrans();
+        case Trans_SP_Xfyun:
+            s->xfTransBuilder.showProperties(props);
+            break;
+
+        default:
+            break;
+    }
+
+    return true;
+}
+
+static bool translate_enable_modified(void *priv, obs_properties_t *props,
+                            obs_property_t *property,
+                            obs_data_t *settings) {
+    int enabled = obs_data_get_bool(settings, PROP_TRANS_ENABLED);
+    auto s = (struct autosub_filter *)priv;
+    if(!enabled){
+        PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_PROVIDER);
+        PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_TARGET_TEXT_SOURCE);
+        s->xfTransBuilder.hideProperties(props);
+    } else {
+        PROPERTY_SET_VISIBLE(props, PROP_TRANS_PROVIDER);
+        PROPERTY_SET_VISIBLE(props, PROP_TRANS_TARGET_TEXT_SOURCE);
+        translate_provider_modified(priv, props, property, settings);
+    }
+    return true;
+}
+
 #undef PROPERTY_SET_UNVISIBLE
+
 
 obs_properties_t* autosub_filter_getproperties(void* data)
 {
@@ -274,6 +349,24 @@ obs_properties_t* autosub_filter_getproperties(void* data)
     t = obs_properties_add_bool(props, PROP_ALINLS_INTRESULT, T_ALINLS_INTRESULT);
     obs_property_set_visible(t, false);
 
+    //Translate
+    t = obs_properties_add_bool(props, PROP_TRANS_ENABLED, T_TRANS_ENABLE);
+    obs_property_set_modified_callback2(t, translate_enable_modified, data);
+    providers = obs_properties_add_list(props, PROP_TRANS_PROVIDER, T_PROVIDER, OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+    obs_property_list_add_int(providers, T_TRANS_SP_XFYUN, Trans_SP_Xfyun);
+    obs_property_list_add_int(providers, T_TRANS_SP_XFNIU, Trans_SP_XfNiu);
+    obs_property_set_modified_callback2(providers, translate_provider_modified, data);
+
+    sources = obs_properties_add_list(
+            props, PROP_TRANS_TARGET_TEXT_SOURCE, T_TARGET_TEXT_SOURCE,
+            OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+
+    obs_property_list_add_string(sources, obs_module_text("None"), "none");
+
+    obs_enum_sources(add_sources, sources);
+
+    //Translate XFYun
+    s->xfTransBuilder.getProperties(props);
     return props;
 }
 
@@ -328,6 +421,7 @@ void autosub_filter_update(void* data, obs_data_t* settings)
                 s->text_source = NULL;
 			}
             s->text_source_name = text_source_name;
+            s->text_source_last_update = os_gettime_ns() - 3000000000;
         }
     }
     s->text_source_update_lock.unlock();
@@ -461,26 +555,16 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         obs_source_release(target);
     });
 
-    s->asr->setResultCallback([=](QString str, int typ){
-        if(typ == 0)
-            blog(LOG_INFO, "Result: %d, %s", typ, str.toStdString().c_str());
-        int t = s->max_count;
-        if(t != 0 && str.count() > t){
-            str = str.rightRef(t).toString();
-        }
-        setText(str);
-    });
-
-    s->asr->setErrorCallback([=](ErrorType type, QString msg) {
+    s->asr->setErrorCallback([=](ASRBase::ErrorType type, QString msg) {
         static bool prevIsApiError = false;
         blog(LOG_INFO, "Websocket error: %d, %s", type, msg.toStdString().c_str());
         QString errorMsg;
         switch(type){
-            case ERROR_API:
+            case ASRBase::ERROR_API:
                 errorMsg = "API Error";
                 prevIsApiError = true;
                 break;
-            case ERROR_SOCKET:
+            case ASRBase::ERROR_SOCKET:
                 if(prevIsApiError) {
                     return;
                 }
@@ -509,6 +593,101 @@ void autosub_filter_update(void* data, obs_data_t* settings)
     s->running = true;
     s->lock_asr.unlock();
 
+    bool trans_enabled = obs_data_get_bool(settings, PROP_TRANS_ENABLED);
+    s->enable_trans = trans_enabled;
+
+    int trans_sp = obs_data_get_int(settings, PROP_TRANS_PROVIDER);
+    s->trans_provider = trans_sp;
+    switch(trans_sp) {
+        case Trans_SP_Xfyun:
+        case Trans_SP_XfNiu:
+            s->xfTransBuilder.updateSettings(settings);
+            break;
+    }
+    std::shared_ptr<TransBase> new_translator;
+    TransBuilderBase *transBuilder = nullptr;
+    switch(trans_sp) {
+        case Trans_SP_Xfyun:
+        case Trans_SP_XfNiu:
+            transBuilder = &s->xfTransBuilder;
+            new_translator.reset(s->xfTransBuilder.build());
+            if(new_translator){
+                s->lock_trans.lock();
+                s->translator = new_translator;
+                s->lock_trans.unlock();
+            }
+            break;
+    }
+
+    const char *trans_source_name = obs_data_get_string(settings, PROP_TRANS_TARGET_TEXT_SOURCE);
+    valid_text_source = strcmp(trans_source_name, "none") != 0;
+	obs_weak_source_t *old_weak_trans_source = NULL;
+    s->trans_source_update_lock.lock();
+    if (!valid_text_source){
+        if (s->trans_source) {
+            old_weak_trans_source = s->trans_source;
+            s->trans_source = NULL;
+        }
+    } else {
+        if(!s->trans_source_name ||
+		    strcmp(s->trans_source_name, trans_source_name) != 0) {
+            if (s->trans_source) {
+                old_weak_trans_source = s->trans_source;
+                s->trans_source = NULL;
+			}
+            s->trans_source_name = trans_source_name;
+            s->trans_source_last_update = os_gettime_ns() - 3000000000;
+        }
+    }
+    s->trans_source_update_lock.unlock();
+
+	if (old_weak_trans_source) {
+		obs_weak_source_release(old_weak_trans_source);
+	}
+
+
+    std::function<void(QString)> setTransText([=](QString str){
+        obs_weak_source_t *trans_source = nullptr;
+        blog(LOG_INFO, "TransResult: %s", str.toStdString().c_str());
+        s->trans_source_update_lock.lock();
+        trans_source = s->trans_source;
+        s->trans_source_update_lock.unlock();
+        if(!trans_source) {
+            return;
+        }
+        auto target = obs_weak_source_get_source(trans_source);
+        if(!target){
+            return;
+        }
+        auto text_settings = obs_source_get_settings(target);
+        obs_data_set_string(text_settings, "text", str.toUtf8().toStdString().c_str());
+        obs_source_update(target, text_settings);
+        obs_source_release(target);
+    });
+
+    if(s->translator) {
+        s->translator->setResultCallback([=](QString data){
+            setTransText(data);
+        });
+
+        s->translator->setErrorCallback([=](QString data){
+            setTransText(data);
+        });
+    }
+    s->asr->setResultCallback([=](QString str, int typ){
+        if(typ == 0 && s->enable_trans){
+            s->lock_trans.lock();
+            if(s->translator && transBuilder)
+                emit s->translator->requestTranslate(transBuilder->getFromLang(), transBuilder->getToLang(), str);
+            s->lock_trans.unlock();
+            blog(LOG_INFO, "Result: %d, %s", typ, str.toStdString().c_str());
+        }
+        int t = s->max_count;
+        if(t != 0 && str.count() > t){
+            str = str.rightRef(t).toString();
+        }
+        setText(str);
+    });
 }
 
 void autosub_filter_shown(void* data)
@@ -535,7 +714,6 @@ void* autosub_filter_create(obs_data_t* settings, obs_source_t* source)
 {
     auto s = new autosub_filter;
     s->source = source;
-
     autosub_filter_update(s, settings);
     return s;
 }
@@ -588,18 +766,17 @@ struct obs_audio_data * autosub_filter_audio(void *data, struct obs_audio_data *
 }
 
 static void autosub_filter_tick(void *data, float seconds){
-    static int last_time = 0;
     autosub_filter *s = (autosub_filter*)data;
-    char *new_name = NULL;
+    char *new_name = nullptr;
 
     s->text_source_update_lock.lock();
 
     if (s->text_source_name && !s->text_source) {
         uint64_t t = os_gettime_ns();
 
-        if (t - last_time > 3000000000) {
+        if (t - s->text_source_last_update > 3000000000) {
             new_name = bstrdup(s->text_source_name);
-            last_time = t;
+            s->text_source_last_update = t;
         }
     }
     
@@ -628,6 +805,46 @@ static void autosub_filter_tick(void *data, float seconds){
         }
 
         bfree(new_name);
+        new_name = nullptr;
+    }
+
+    s->trans_source_update_lock.lock();
+
+    if (s->trans_source_name && !s->trans_source) {
+        uint64_t t = os_gettime_ns();
+
+        if (t - s->trans_source_last_update > 3000000000) {
+            new_name = bstrdup(s->trans_source_name);
+            s->trans_source_last_update = t;
+        }
+    }
+    
+    s->trans_source_update_lock.unlock();
+
+    if (new_name) {
+        obs_source_t *target_source =
+            *new_name ? obs_get_source_by_name(new_name) : NULL;
+        obs_weak_source_t *weak_target_source =
+            target_source ? obs_source_get_weak_source(target_source)
+                    : NULL;
+
+        s->trans_source_update_lock.lock();
+
+        if (s->trans_source_name &&
+            strcmp(s->trans_source_name, new_name) == 0) {
+            s->trans_source = weak_target_source;
+            weak_target_source = NULL;
+        }
+
+        s->trans_source_update_lock.unlock();
+
+        if (target_source) {
+            obs_weak_source_release(weak_target_source);
+            obs_source_release(target_source);
+        }
+
+        bfree(new_name);
+        new_name = nullptr;
     }
 }
 
