@@ -23,28 +23,28 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <QObject>
 #include <QMap>
 
-enum ErrorType {
-    ERROR_NOERROR = 0,
-    ERROR_SOCKET,
-    ERROR_API,
-    ERROR_END
-};
-
-typedef std::function<void(QString, int)> ResultCallback;
-typedef std::function<void(ErrorType, QString)> ErrorCallback;
-typedef std::function<void()> ConnectedCallback;
-typedef std::function<void()> DisconnectedCallback;
-
-
-enum ResultType {
-    ResultType_End = 0,
-    ResultType_Middle
-
-};
-
 class ASRBase : public QObject {
     Q_OBJECT
-public:
+public:    
+    enum ErrorType {
+        ERROR_NOERROR = 0,
+        ERROR_SOCKET,
+        ERROR_API,
+        ERROR_END
+    };
+
+    typedef std::function<void(QString, int)> ResultCallback;
+    typedef std::function<void(ErrorType, QString)> ErrorCallback;
+    typedef std::function<void()> ConnectedCallback;
+    typedef std::function<void()> DisconnectedCallback;
+
+
+    enum ResultType {
+        ResultType_End = 0,
+        ResultType_Middle
+
+    };
+
     ASRBase(QObject *parent);
     void setResultCallback(ResultCallback cb);
     void setErrorCallback(ErrorCallback cb);
@@ -52,7 +52,6 @@ public:
     void setDisconnectedCallback(DisconnectedCallback cb);
     void setParam(QString key, QString value);
     virtual ~ASRBase(){};
-
 protected:
     ResultCallback getResultCallback();
     ErrorCallback getErrorCallback();

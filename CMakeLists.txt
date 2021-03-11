@@ -28,17 +28,25 @@ endif()
 set(obs-auto-subtitle_SOURCES
 		src/obs-auto-subtitle.cpp
         src/obs-autosub-filter.cpp
-		src/vendor/ASRBase.cpp
-		src/vendor/XFRtASR.cpp
-		src/vendor/HwCloudRASR.cpp
-		src/vendor/AliNLS.cpp)
+		src/builder/XFTransBuilder.cpp
+		src/vendor/ASR/ASRBase.cpp
+		src/vendor/ASR/XFRtASR.cpp
+		src/vendor/ASR/HwCloudRASR.cpp
+		src/vendor/ASR/AliNLS.cpp
+		src/vendor/Trans/TransBase.cpp
+		src/vendor/Trans/XFTrans.cpp)
 
 set(obs-auto-subtitle_HEADERS
 		src/obs-auto-subtitle.h
-		src/vendor/ASRBase.h
-		src/vendor/XFRtASR.h
-		src/vendor/HwCloudRASR.h
-		src/vendor/AliNLS.h)
+		src/builder/PropBuilderBase.h
+		src/builder/TransBuilderBase.h
+		src/builder/XFTransBuilder.h
+		src/vendor/ASR/ASRBase.h
+		src/vendor/ASR/XFRtASR.h
+		src/vendor/ASR/HwCloudRASR.h
+		src/vendor/ASR/AliNLS.h
+		src/vendor/Trans/TransBase.h
+		src/vendor/Trans/XFTrans.h)
 
 add_library(obs-auto-subtitle MODULE
 	${obs-auto-subtitle_SOURCES}

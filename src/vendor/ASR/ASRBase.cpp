@@ -28,15 +28,15 @@ void ASRBase::setParam(QString key, QString value) {
     params[key] = value;
 }
 
-void ASRBase::setResultCallback(ResultCallback cb) {
+void ASRBase::setResultCallback(ASRBase::ResultCallback cb) {
     this->resultCallback = std::move(cb);
 }
 
-void ASRBase::setConnectedCallback(ConnectedCallback cb) {
+void ASRBase::setConnectedCallback(ASRBase::ConnectedCallback cb) {
     this->connectedCallback = std::move(cb);
 }
 
-void ASRBase::setDisconnectedCallback(DisconnectedCallback cb) {
+void ASRBase::setDisconnectedCallback(ASRBase::DisconnectedCallback cb) {
     this->disconnectedCallback = std::move(cb);
 }
 
@@ -44,18 +44,18 @@ void ASRBase::setErrorCallback(ErrorCallback cb) {
     this->errorCallback = std::move(cb);
 }
 
-ResultCallback ASRBase::getResultCallback() {
+ASRBase::ResultCallback ASRBase::getResultCallback() {
     return resultCallback;
 }
 
-ConnectedCallback ASRBase::getConnectedCallback() {
+ASRBase::ConnectedCallback ASRBase::getConnectedCallback() {
     return connectedCallback;
 }
 
-DisconnectedCallback ASRBase::getDisconnectedCallback() {
+ASRBase::DisconnectedCallback ASRBase::getDisconnectedCallback() {
     return disconnectedCallback;
 }
 
-ErrorCallback ASRBase::getErrorCallback() {
+ASRBase::ErrorCallback ASRBase::getErrorCallback() {
     return errorCallback;
 }

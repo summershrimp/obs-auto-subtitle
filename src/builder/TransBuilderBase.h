@@ -16,15 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
 
-#ifndef OBS_AUTOSUB_H
-#define OBS_AUTOSUB_H
+#ifndef OBS_AUTOSUB_TRANS_BUILDER_BASE_H
+#define OBS_AUTOSUB_TRANS_BUILDER_BASE_H
 
-#include <string>
+#include "PropBuilderBase.h"
+#include "../vendor/Trans/TransBase.h"
 
-#ifndef OBS_AUTOSUB_VERSION
-#define OBS_AUTOSUB_VERSION "unknown"
+class TransBuilderBase: public PropBuilderBase<TransBase> { 
+public:
+    QString getFromLang() {
+        return fromLang;
+    }
+    QString getToLang() {
+        return toLang;
+    }
+protected:
+    QString fromLang;
+    QString toLang;
+};
+
+#define _PROP(name) "autosub_filter_trans_" # name
+
 #endif
-
-#define blog(level, msg, ...) blog(level, "[obs-autosub] " msg, ##__VA_ARGS__)
-
-#endif // OBS_AUTOSUB_H
