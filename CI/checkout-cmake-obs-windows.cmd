@@ -65,6 +65,9 @@ if not exist %OBSPath% (
 	echo obs-studio directory does not exist
 	git clone https://github.com/obsproject/obs-studio %OBSPath%
 	cd /D %OBSPath%\
+	if defined OBSTargetVersion (
+		git checkout %OBSTargetVersion%
+	)
 	git describe --tags --abbrev=0 --exclude="*-rc*" > "%OBSPath%\obs-studio-latest-tag.txt"
 	set /p OBSLatestTag=<"%OBSPath%\obs-studio-latest-tag.txt"
 	set BuildOBS=true
