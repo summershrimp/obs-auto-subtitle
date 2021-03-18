@@ -97,24 +97,24 @@ enum ServiceProvider {
 
 struct autosub_filter
 {
-    obs_source_t* source;
-    uint32_t sample_rate;
-    uint32_t channels;
-    int max_count;
-    bool running;
+    obs_source_t* source = nullptr;
+    uint32_t sample_rate = 48000;
+    uint32_t channels = 2;
+    int max_count = 0;
+    bool running = false;
 
-    int provider;
+    int provider = SP_Default;
     struct {
         QString appId;
         QString apiKey;
         bool punc;
         QString pd;
-    }xfyun;
+    } xfyun;
 
     struct {
         QString project_id;
         QString token;
-    }hwcloud;
+    } hwcloud;
 
     struct {
         QString appKey;
@@ -122,18 +122,18 @@ struct autosub_filter
         bool punc;
         bool itn;
         bool int_result;
-    }alinls;
+    } alinls;
 
-    int refresh;
+    int refresh = false;
 
-    ASRBase *asr;
+    ASRBase *asr = nullptr;
     std::mutex lock_asr;
-    audio_resampler_t *resampler;
+    audio_resampler_t *resampler = nullptr;
     std::mutex resampler_update_lock;
 
-    const char *text_source_name;
+    const char *text_source_name = nullptr;
     std::mutex text_source_update_lock;
-    obs_weak_source_t *text_source;
+    obs_weak_source_t *text_source = nullptr;
 };
 
 const char* autosub_filter_getname(void* data)
@@ -395,6 +395,7 @@ void autosub_filter_update(void* data, obs_data_t* settings)
             s->alinls.punc = punc;
             s->alinls.itn = itn;
             s->alinls.int_result = inter_result;
+            s->refresh = true;
             break;
     }
 
@@ -533,13 +534,6 @@ void autosub_filter_deactivated(void* data)
 void* autosub_filter_create(obs_data_t* settings, obs_source_t* source)
 {
     auto s = new autosub_filter;
-    s->resampler = nullptr;
-    s->asr = nullptr;
-    s->running = false;
-    s->text_source = nullptr;
-    s->provider = SP_Default;
-    s->max_count = 0;
-
     s->source = source;
 
     autosub_filter_update(s, settings);
