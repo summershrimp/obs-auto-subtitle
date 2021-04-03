@@ -28,7 +28,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 class XFTrans : public TransBase {
 public:
     XFTrans(QString appid, QString apiKey, QString apiSecret, QObject *parent = nullptr);
-    XFTrans::XFTrans(QString appId, QString apiKey, QString apiSecret, QString endpoint, QObject *parent = nullptr);
+    XFTrans(QString appId, QString apiKey, QString apiSecret, QString endpoint, QObject *parent = nullptr);
     ~XFTrans();
 public slots:
     void onResult(QNetworkReply *rep);
@@ -45,4 +45,4 @@ private:
     QString endpoint;
 };
 
-#endif OBS_AUTO_SUBTITLE_XFTRANS_H
+#endif // OBS_AUTO_SUBTITLE_XFTRANS_H

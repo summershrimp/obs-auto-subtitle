@@ -35,8 +35,12 @@ else
     git fetch
 fi
 
-OBSLatestTag=$(git describe --tags --abbrev=0)
-git checkout $OBSLatestTag
+if [ -z "${OBSTargetVersion}" ]; then
+    OBSLatestTag=$(git describe --tags --abbrev=0)
+    git checkout $OBSLatestTag
+else
+    git checkout $OBSTargetVersion
+fi
 rm -fr build
 mkdir -p build && cd build
 echo "[obs-auto-subtitle] Building obs-studio.."

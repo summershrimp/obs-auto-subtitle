@@ -23,7 +23,7 @@ echo "[obs-auto-subtitle] Building 'obs-auto-subtitle' for macOS."
 rm -fr build
 mkdir -p build && cd build
 cmake .. \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=10.11 \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13 \
     -DQTDIR="/tmp/obsdeps" \
     -DLIBOBS_INCLUDE_DIR=../../obs-studio/libobs \
     -DLIBOBS_LIB=../../obs-studio/libobs \

@@ -96,6 +96,8 @@ jobs:
 - job: 'Build_macOS'
   pool:
     vmImage: 'macos-10.14'
+  variables:
+    OBSTargetVersion: '26.1.0'
   steps:
     - checkout: self
       submodules: true
