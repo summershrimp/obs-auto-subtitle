@@ -43,7 +43,7 @@ void XFTrans::onResult(QNetworkReply *rep){
         callbackError("Parse response json failed");
         return;
     }
-    auto &bodyObject = body.object();
+    const auto &bodyObject = body.object();
     auto iter = bodyObject.find("code");
     if(iter == bodyObject.end() || !iter.value().isDouble()){
         iter = bodyObject.find("message");
@@ -73,21 +73,21 @@ void XFTrans::onResult(QNetworkReply *rep){
         callbackError("Response json format error");
         return;
     }
-    auto &dataObject = iter.value().toObject();
+    const auto &dataObject = iter.value().toObject();
 
     iter = dataObject.find("result");
     if(iter == dataObject.end() || !iter.value().isObject()){
         callbackError("Response json format error");
         return;
     }
-    auto &resultObject = iter.value().toObject();
+    const auto &resultObject = iter.value().toObject();
 
     iter = resultObject.find("trans_result");
     if(iter == resultObject.end() || !iter.value().isObject()){
         callbackError("Response json format error");
         return;
     }
-    auto &trans_resultObject = iter.value().toObject();
+    const auto &trans_resultObject = iter.value().toObject();
     iter = trans_resultObject.find("dst");
     if(iter == trans_resultObject.end() || !iter.value().isString()){
        callbackError("Response json format error");
