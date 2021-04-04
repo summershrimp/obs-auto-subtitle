@@ -95,7 +95,7 @@ jobs:
 
 - job: 'Build_macOS'
   pool:
-    vmImage: 'macos-10.14'
+    vmImage: 'macos-10.15'
   variables:
     OBSTargetVersion: '26.1.0'
   steps:
@@ -107,6 +107,8 @@ jobs:
 
     - script: ./CI/install-build-obs-macos.sh
       displayName: 'Build OBS'
+      env:
+        OBSTargetVersion: $(OBSTargetVersion)
 
     - script: ./CI/build-macos.sh
       displayName: 'Build obs-auto-subtitle'

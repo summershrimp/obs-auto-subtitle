@@ -12,7 +12,6 @@ if [ "${OSTYPE}" != "Darwin" ]; then
 fi
 
 echo "[obs-auto-subtitle] Preparing package build"
-export QT_CELLAR_PREFIX="$(/usr/bin/find /usr/local/Cellar/qt -d 1 | sort -t '.' -k 1,1n -k 2,2n -k 3,3n | tail -n 1)"
 
 GIT_HASH=$(git rev-parse --short HEAD)
 GIT_BRANCH_OR_TAG=$(git name-rev --name-only HEAD | awk -F/ '{print $NF}')
@@ -33,7 +32,7 @@ install_name_tool \
 	-change /tmp/obsdeps/lib/QtNetwork.framework/Versions/5/QtNetwork \
 		@executable_path/../Frameworks/QtNetwork.framework/Versions/5/QtNetwork \
 	-change /tmp/obsdeps/lib/QtWebSockets.framework/Versions/5/QtWebSockets \
-		@executable_path/../Frameworks/QtWebSockets.framework/Versions/5/QtWebSockets \
+		@loader_path/../Frameworks/QtWebSockets.framework/Versions/5/QtWebSockets \
 	./build/obs-auto-subtitle.so
 
 # Check if replacement worked
@@ -47,7 +46,7 @@ chmod -R +w ./build/QtWebSockets.framework
 
 echo "[obs-auto-subtitle] Modifying QtWebSockets.framework"
 install_name_tool \
-  -id @executable_path/../Frameworks/QtWebSockets.framework/Versions/5/QtWebSockets \
+  -id QtWebSockets.framework/Versions/5/QtWebSockets \
   ./build/QtWebSockets.framework/Versions/5/QtWebSockets
 
 install_name_tool \
