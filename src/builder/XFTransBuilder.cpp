@@ -27,6 +27,7 @@ static LangList _langList[] = {
     {"fr",  _TKEY(Trans.Frenche)},
     {"es",  _TKEY(Trans.Spanish)},
     {"ar",  _TKEY(Trans.Arabic)},
+    {"th",  _TKEY(Trans.Thai)},
     {nullptr, nullptr}
 };
 
