@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "obs-auto-subtitle"
-#define MyAppVersion "0.2.3"
+#define MyAppVersion "0.3.0"
 #define MyAppPublisher "Yibai Zhang"
 #define MyAppURL "http://github.com/summershrimp/obs-auto-subtitle"
 
