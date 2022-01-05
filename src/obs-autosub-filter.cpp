@@ -35,6 +35,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include "vendor/ASR/AliNLS.h"
 #include "vendor/Trans/XFTrans.h"
 #include "builder/XFTransBuilder.h"
+#include "builder/VoskBuilder.h"
 
 #define T_FILTER_NAME obs_module_text("AutoSub.FilterName")
 
@@ -100,12 +101,14 @@ enum ServiceProvider {
     SP_Xfyun,
     SP_Hwcloud,
     SP_Sogou,
-    SP_Aliyun
+    SP_Aliyun,
+    SP_Vosk
 };
 #define T_SP_XFYUN obs_module_text("AutoSub.SP.Xfyun")
 #define T_SP_HWCLOUD obs_module_text("AutoSub.SP.Hwcloud")
 #define T_SP_SOGOU obs_module_text("AutoSub.SP.Sogou")
 #define T_SP_ALIYUN obs_module_text("AutoSub.SP.Aliyun")
+#define T_SP_VOSK obs_module_text("AutoSub.SP.VOSK")
 
 enum TransServiceProvider {
     Trans_SP_Default = 0,
@@ -161,6 +164,7 @@ struct autosub_filter
     int trans_provider;
 
     XFTransBuilder xfTransBuilder;
+    VoskBuilder voskBuilder;
 
     std::shared_ptr<TransBase> translator = nullptr;
     std::mutex lock_trans;
@@ -203,7 +207,7 @@ static bool add_sources(void *data, obs_source_t *source)
         obs_property_set_visible(prop, true);\
     }while(0)
 
-static bool provider_modified(obs_properties_t *props,
+static bool provider_modified(void *priv, obs_properties_t *props,
                             obs_property_t *property,
                             obs_data_t *settings){
     int cur_provider = obs_data_get_int(settings, PROP_PROVIDER);
@@ -218,6 +222,9 @@ static bool provider_modified(obs_properties_t *props,
     PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_PUNC);
     PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_ITN);
     PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_INTRESULT);
+
+    auto s = (struct autosub_filter *)priv;
+    s->voskBuilder.hideProperties(props);
 
     switch(cur_provider) {
         case SP_Hwcloud:
@@ -239,6 +246,10 @@ static bool provider_modified(obs_properties_t *props,
             break;
         case SP_Sogou:
             break;
+        case SP_Vosk:
+            s->voskBuilder.showProperties(props);
+            break;
+
         default:
             break;
     }
@@ -309,8 +320,9 @@ obs_properties_t* autosub_filter_getproperties(void* data)
     obs_property_list_add_int(providers, T_SP_SOGOU, SP_Sogou);
     obs_property_list_add_int(providers, T_SP_HWCLOUD, SP_Hwcloud);
     obs_property_list_add_int(providers, T_SP_ALIYUN, SP_Aliyun);
+    obs_property_list_add_int(providers, T_SP_VOSK, SP_Vosk);
 
-    obs_property_set_modified_callback(providers, provider_modified);
+    obs_property_set_modified_callback2(providers, provider_modified, data);
 
     //XFYun
     auto t = obs_properties_add_text(props, PROP_XF_APPID, T_APPID, OBS_TEXT_DEFAULT);
@@ -348,6 +360,9 @@ obs_properties_t* autosub_filter_getproperties(void* data)
     obs_property_set_visible(t, false);
     t = obs_properties_add_bool(props, PROP_ALINLS_INTRESULT, T_ALINLS_INTRESULT);
     obs_property_set_visible(t, false);
+
+    //VOSK
+    s->voskBuilder.getProperties(props);
 
     //Translate
     t = obs_properties_add_bool(props, PROP_TRANS_ENABLED, T_TRANS_ENABLE);
@@ -491,6 +506,8 @@ void autosub_filter_update(void* data, obs_data_t* settings)
             s->alinls.int_result = inter_result;
             s->refresh = true;
             break;
+        case SP_Vosk:
+            s->voskBuilder.updateSettings(settings);
     }
 
     if(!s->refresh)
@@ -527,6 +544,9 @@ void autosub_filter_update(void* data, obs_data_t* settings)
             if(s->alinls.int_result) {
                 s->asr->setParam("enable_intermediate_result", "true");
             }
+            break;
+        case SP_Vosk:
+            s->asr = s->voskBuilder.build();
             break;
         default:
             blog(LOG_WARNING, "Unsupported ASR provider id: %d", s->provider);

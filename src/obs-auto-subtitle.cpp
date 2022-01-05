@@ -18,6 +18,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #include <obs-module.h>
 #include <util/platform.h>
+#include "vendor/ASR/vosk/vosk_api_wrapper.h"
 
 #include "obs-auto-subtitle.h"
 
@@ -32,7 +33,7 @@ bool obs_module_load(void)
 {
     autosub_filter_info = create_autosub_filter_info();
     obs_register_source(&autosub_filter_info);
-
+	vosk_wrapper_init();
 	return true;
 }
 

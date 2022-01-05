@@ -19,6 +19,8 @@ endif()
 find_package(LibObs REQUIRED)
 find_package(Qt5 REQUIRED Core Widgets Network WebSockets)
 
+include(external/VOSK.cmake)
+
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(ARCH 64)
 else()
@@ -29,24 +31,31 @@ set(obs-auto-subtitle_SOURCES
 		src/obs-auto-subtitle.cpp
         src/obs-autosub-filter.cpp
 		src/builder/XFTransBuilder.cpp
+		src/builder/VoskBuilder.cpp
 		src/vendor/ASR/ASRBase.cpp
 		src/vendor/ASR/XFRtASR.cpp
 		src/vendor/ASR/HwCloudRASR.cpp
 		src/vendor/ASR/AliNLS.cpp
 		src/vendor/Trans/TransBase.cpp
-		src/vendor/Trans/XFTrans.cpp)
+		src/vendor/Trans/XFTrans.cpp
+		src/vendor/ASR/vosk/vosk_api_wrapper.c
+		src/vendor/ASR/Vosk.cpp)
 
 set(obs-auto-subtitle_HEADERS
 		src/obs-auto-subtitle.h
 		src/builder/PropBuilderBase.h
 		src/builder/TransBuilderBase.h
 		src/builder/XFTransBuilder.h
+		src/builder/SpeechBuilderBase.h
+		src/builder/VOskBuilder.h
 		src/vendor/ASR/ASRBase.h
 		src/vendor/ASR/XFRtASR.h
 		src/vendor/ASR/HwCloudRASR.h
 		src/vendor/ASR/AliNLS.h
 		src/vendor/Trans/TransBase.h
-		src/vendor/Trans/XFTrans.h)
+		src/vendor/Trans/XFTrans.h
+		src/vendor/ASR/vosk/vosk_api_wrapper.h
+		src/vendor/ASR/Vosk.h)
 
 add_library(obs-auto-subtitle MODULE
 	${obs-auto-subtitle_SOURCES}
