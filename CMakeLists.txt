@@ -38,6 +38,7 @@ set(obs-auto-subtitle_SOURCES
 
 set(obs-auto-subtitle_HEADERS
 		src/obs-auto-subtitle.h
+		src/obs-autosub-filter.h
 		src/builder/PropBuilderBase.h
 		src/builder/TransBuilderBase.h
 		src/builder/XFTransBuilder.h
