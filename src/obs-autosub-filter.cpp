@@ -539,12 +539,14 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         });
     }
     s->asr->setResultCallback([=](QString str, int typ){
-        if(typ == 0 && s->enable_trans){
-            s->lock_trans.lock();
-            if(s->translator && transBuilder)
-                emit s->translator->requestTranslate(transBuilder->getFromLang(), transBuilder->getToLang(), str);
-            s->lock_trans.unlock();
-            blog(LOG_INFO, "Result: %d, %s", typ, str.toStdString().c_str());
+        if(typ == 0){
+            if(s->enable_trans) {
+                s->lock_trans.lock();
+                if(s->translator && transBuilder)
+                    emit s->translator->requestTranslate(transBuilder->getFromLang(), transBuilder->getToLang(), str);
+                s->lock_trans.unlock();
+            }
+            blog(LOG_INFO, "Result: %s", str.toStdString().c_str());
             s->last_update_time = os_gettime_ns();
         }
         int t = s->max_count;
