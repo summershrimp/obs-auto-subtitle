@@ -710,7 +710,7 @@ static void autosub_filter_tick(void *data, float seconds){
         bfree(new_name);
         new_name = nullptr;
     }
-    uint64_t clear_timeout_ns = s->clear_timeout * 1000000;
+    uint64_t clear_timeout_ns = (uint64_t)s->clear_timeout * 1000000UL;
     if (s->last_update_time != 0 && clear_timeout_ns != 0 && t - s->last_update_time > clear_timeout_ns) {
         s->last_update_time = 0;
         obs_weak_source_t* text_source = nullptr;
