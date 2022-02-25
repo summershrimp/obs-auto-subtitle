@@ -30,6 +30,12 @@ struct obs_source_info autosub_filter_info;
 
 bool obs_module_load(void)
 {
+
+#ifdef _WIN32
+	(void)os_dlopen("./libcrypto-1_1-x64.dll");
+	(void)os_dlopen("./libssl-1_1-x64.dll");
+#endif
+
     autosub_filter_info = create_autosub_filter_info();
     obs_register_source(&autosub_filter_info);
 
