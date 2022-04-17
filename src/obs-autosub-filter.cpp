@@ -114,6 +114,7 @@ static bool translate_provider_modified(void *priv, obs_properties_t *props,
     int cur_provider = obs_data_get_int(settings, PROP_TRANS_PROVIDER);
     auto s = (struct autosub_filter *)priv;
     s->xfTransBuilder.hideProperties(props);
+    s->gsTransBuilder.hideProperties(props);
     s->xfTransBuilder.setNormalTrans();
     switch(cur_provider){
         case Trans_SP_XfNiu:
@@ -121,7 +122,9 @@ static bool translate_provider_modified(void *priv, obs_properties_t *props,
         case Trans_SP_Xfyun:
             s->xfTransBuilder.showProperties(props);
             break;
-
+        case Trans_SP_GScript:
+            s->gsTransBuilder.showProperties(props);
+            break;
         default:
             break;
     }
@@ -138,6 +141,7 @@ static bool translate_enable_modified(void *priv, obs_properties_t *props,
         PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_PROVIDER);
         PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_TARGET_TEXT_SOURCE);
         s->xfTransBuilder.hideProperties(props);
+        s->gsTransBuilder.hideProperties(props);
     } else {
         PROPERTY_SET_VISIBLE(props, PROP_TRANS_PROVIDER);
         PROPERTY_SET_VISIBLE(props, PROP_TRANS_TARGET_TEXT_SOURCE);
@@ -218,6 +222,7 @@ obs_properties_t* autosub_filter_getproperties(void* data)
     providers = obs_properties_add_list(props, PROP_TRANS_PROVIDER, T_PROVIDER, OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
     obs_property_list_add_int(providers, T_TRANS_SP_XFYUN, Trans_SP_Xfyun);
     obs_property_list_add_int(providers, T_TRANS_SP_XFNIU, Trans_SP_XfNiu);
+    obs_property_list_add_int(providers, T_TRANS_SP_GSCRIPT, Trans_SP_GScript);
     obs_property_set_modified_callback2(providers, translate_provider_modified, data);
 
     sources = obs_properties_add_list(
@@ -230,6 +235,7 @@ obs_properties_t* autosub_filter_getproperties(void* data)
 
     //Translate XFYun
     s->xfTransBuilder.getProperties(props);
+    s->gsTransBuilder.getProperties(props);
     return props;
 }
 
@@ -249,16 +255,15 @@ struct resample_info resample_output = {
 void autosub_filter_update(void* data, obs_data_t* settings)
 {
     autosub_filter *s = (autosub_filter*)data;
-    audio_output *global_audio = obs_get_audio();
-    const uint32_t sample_rate =
-            audio_output_get_sample_rate(global_audio);
-    const size_t num_channels = audio_output_get_channels(global_audio);
-    s->sample_rate = sample_rate;
-    s->channels = num_channels;
+	obs_audio_info ai;
+	if (!obs_get_audio_info(&ai))
+		throw std::string("Failed to get OBS audio info");
+    s->sample_rate = ai.samples_per_sec;
+    s->channels = ai.speakers;
     resample_info resample_input = {
-        sample_rate,
-        AUDIO_FORMAT_FLOAT,
-        SPEAKERS_MONO
+        ai.samples_per_sec,
+        AUDIO_FORMAT_FLOAT_PLANAR,
+		ai.speakers
     };
     s->resampler_update_lock.lock();
     if(s->resampler != nullptr) {
@@ -468,6 +473,9 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         case Trans_SP_XfNiu:
             s->xfTransBuilder.updateSettings(settings);
             break;
+        case Trans_SP_GScript:
+            s->gsTransBuilder.updateSettings(settings);
+            break;
     }
     std::shared_ptr<TransBase> new_translator;
     TransBuilderBase *transBuilder = nullptr;
@@ -475,14 +483,21 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         case Trans_SP_Xfyun:
         case Trans_SP_XfNiu:
             transBuilder = &s->xfTransBuilder;
-            new_translator.reset(s->xfTransBuilder.build());
-            if(new_translator){
-                s->lock_trans.lock();
-                s->translator = new_translator;
-                s->lock_trans.unlock();
-            }
             break;
+        case Trans_SP_GScript:
+            transBuilder = &s->gsTransBuilder;
+            break;
+
     }
+    if(transBuilder) {
+        new_translator.reset(transBuilder->build());
+        if(new_translator){
+            s->lock_trans.lock();
+            s->translator = new_translator;
+            s->lock_trans.unlock();
+        }
+    }
+
 
     const char *trans_source_name = obs_data_get_string(settings, PROP_TRANS_TARGET_TEXT_SOURCE);
     valid_text_source = strcmp(trans_source_name, "none") != 0;

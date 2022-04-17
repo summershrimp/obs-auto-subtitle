@@ -16,30 +16,30 @@ You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
 
-#ifndef OBS_AUTOSUB_TRANS_BUILDER_BASE_H
-#define OBS_AUTOSUB_TRANS_BUILDER_BASE_H
+#ifndef OBS_AUTO_SUBTITLE_GSTRANS_H
+#define OBS_AUTO_SUBTITLE_GSTRANS_H
 
-#include "PropBuilderBase.h"
-#include "../vendor/Trans/TransBase.h"
+#define GS_ENDPOINT_URL "https://script.google.com/macros/s/%1/exec"
 
-class TransBuilderBase: public PropBuilderBase<TransBase> { 
+
+#include <QtNetwork>
+#include "TransBase.h"
+
+#define TRANS_ENDPOINT "https://itrans.xfyun.cn/v2/its"
+#define NIUTRANS_ENDPOINT "https://ntrans.xfyun.cn/v2/ots"
+
+class GScriptTrans : public TransBase {
 public:
-    QString getFromLang() {
-        return fromLang;
-    }
-    QString getToLang() {
-        return toLang;
-    }
-protected:
-    QString fromLang;
-    QString toLang;
+    GScriptTrans(QString deployId, QObject *parent = nullptr);
+    ~GScriptTrans();
+public slots:
+    void onResult(QNetworkReply *rep);
+    void onRequestTranslate(QString, QString, QString);
+
+private:
+    QString deployId;
+    QNetworkAccessManager manager;
 };
 
-#define _PROP(name) "autosub_filter_trans_" # name
-
-struct LangList {
-    const char *lang_id;
-    const char *lang_t;
-};
 
 #endif

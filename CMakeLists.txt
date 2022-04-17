@@ -29,12 +29,14 @@ set(obs-auto-subtitle_SOURCES
 		src/obs-auto-subtitle.cpp
         src/obs-autosub-filter.cpp
 		src/builder/XFTransBuilder.cpp
+		src/builder/GSTransBuilder.cpp
 		src/vendor/ASR/ASRBase.cpp
 		src/vendor/ASR/XFRtASR.cpp
 		src/vendor/ASR/HwCloudRASR.cpp
 		src/vendor/ASR/AliNLS.cpp
 		src/vendor/Trans/TransBase.cpp
-		src/vendor/Trans/XFTrans.cpp)
+		src/vendor/Trans/XFTrans.cpp
+		src/vendor/Trans/GScriptTrans.cpp)
 
 set(obs-auto-subtitle_HEADERS
 		src/obs-auto-subtitle.h
@@ -42,12 +44,14 @@ set(obs-auto-subtitle_HEADERS
 		src/builder/PropBuilderBase.h
 		src/builder/TransBuilderBase.h
 		src/builder/XFTransBuilder.h
+		src/builder/GSTransBuilder.h
 		src/vendor/ASR/ASRBase.h
 		src/vendor/ASR/XFRtASR.h
 		src/vendor/ASR/HwCloudRASR.h
 		src/vendor/ASR/AliNLS.h
 		src/vendor/Trans/TransBase.h
-		src/vendor/Trans/XFTrans.h)
+		src/vendor/Trans/XFTrans.h
+		src/vendor/Trans/GScriptTrans.h)
 
 add_library(obs-auto-subtitle MODULE
 	${obs-auto-subtitle_SOURCES}
