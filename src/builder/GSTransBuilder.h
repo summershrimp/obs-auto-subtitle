@@ -16,41 +16,36 @@ You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
 
-#ifndef OBS_AUTOSUB_XFTRANS_BUILDER_H
-#define OBS_AUTOSUB_XFTRANS_BUILDER_H
+#ifndef OBS_AUTOSUB_GSTRANS_BUILDER_H
+#define OBS_AUTOSUB_GSTRANS_BUILDER_H
 
 #include <QString>
 
 #include "TransBuilderBase.h"
-#include "../vendor/Trans/XFTrans.h"
+#include "../vendor/Trans/GScriptTrans.h"
 
-class XFTransBuilder : public TransBuilderBase {
+
+
+class GSTransBuilder : public TransBuilderBase {
 public:
     void getProperties(obs_properties_t *props);
     void showProperties(obs_properties_t *props);
     void hideProperties(obs_properties_t *props);
     void updateSettings(obs_data_t *settings);
     void getDefaults(obs_data_t *settings);
-    void setNormalTrans();
-    void setNiuTrans();
     TransBase *build();
 
 protected:
     static const LangList *langList;
 
 private:
-    QString appId;
-    QString apiKey;
-    QString apiSecret;
-    bool isNiuTrans = false;
+    QString deployId;
     bool needBuild = false;
 };
 
-#define PROP_TRANS_XF_APPID _PROP("xf_appid")
-#define PROP_TRANS_XF_APIKEY _PROP("xf_apikey")
-#define PROP_TRANS_XF_APISECRET _PROP("xf_apisecret")
-#define PROP_TRANS_XF_FROMLANG _PROP("xf_fromlang")
-#define PROP_TRANS_XF_TOLANG _PROP("xf_tolang")
+#define PROP_TRANS_GS_DEPLOYID _PROP("gs_deployid")
+#define PROP_TRANS_GS_FROMLANG _PROP("gs_fromlang")
+#define PROP_TRANS_GS_TOLANG _PROP("gs_tolang")
 
 #endif
 

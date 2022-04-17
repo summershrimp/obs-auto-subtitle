@@ -24,6 +24,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include "vendor/ASR/AliNLS.h"
 #include "vendor/Trans/XFTrans.h"
 #include "builder/XFTransBuilder.h"
+#include "builder/GSTransBuilder.h"
 
 #define T_FILTER_NAME obs_module_text("AutoSub.FilterName")
 
@@ -102,11 +103,14 @@ enum ServiceProvider {
 enum TransServiceProvider {
     Trans_SP_Default = 0,
     Trans_SP_Xfyun,
-    Trans_SP_XfNiu
+    Trans_SP_XfNiu,
+    Trans_SP_GScript,
 };
 
 #define T_TRANS_SP_XFYUN obs_module_text("AutoSub.Trans.SP.Xfyun")
 #define T_TRANS_SP_XFNIU obs_module_text("AutoSub.Trans.SP.XfyunNiu")
+#define T_TRANS_SP_GSCRIPT obs_module_text("AutoSub.Trans.SP.GoogleScript")
+
 
 struct autosub_filter
 {
@@ -155,6 +159,7 @@ struct autosub_filter
     int trans_provider;
 
     XFTransBuilder xfTransBuilder;
+    GSTransBuilder gsTransBuilder;
 
     std::shared_ptr<TransBase> translator = nullptr;
     std::mutex lock_trans;
