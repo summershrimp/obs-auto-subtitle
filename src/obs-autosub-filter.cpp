@@ -51,12 +51,19 @@ static bool add_sources(void *data, obs_source_t *source)
 	return true;
 }
 
+#ifdef PROPERTY_SET_UNVISIBLE
+#undef PROPERTY_SET_UNVISIBLE
+#endif
+
 #define PROPERTY_SET_UNVISIBLE(props, prop_name)                           \
 	do {                                                               \
 		obs_property *prop = obs_properties_get(props, prop_name); \
 		obs_property_set_visible(prop, false);                     \
 	} while (0)
 
+#ifdef PROPERTY_SET_VISIBLE
+#undef PROPERTY_SET_VISIBLE
+#endif
 #define PROPERTY_SET_VISIBLE(props, prop_name)                             \
 	do {                                                               \
 		obs_property *prop = obs_properties_get(props, prop_name); \
@@ -67,40 +74,14 @@ static bool provider_modified(obs_properties_t *props, obs_property_t *property,
 			      obs_data_t *settings)
 {
 	int cur_provider = obs_data_get_int(settings, PROP_PROVIDER);
-	PROPERTY_SET_UNVISIBLE(props, PROP_XF_APPID);
-	PROPERTY_SET_UNVISIBLE(props, PROP_XF_APIKEY);
-	PROPERTY_SET_UNVISIBLE(props, PROP_XF_PUNC);
-	PROPERTY_SET_UNVISIBLE(props, PROP_XF_PD);
-	PROPERTY_SET_UNVISIBLE(props, PROP_HWCLOUD_PROJID);
-	PROPERTY_SET_UNVISIBLE(props, PROP_HWCLOUD_TOKEN);
-	PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_APPKEY);
-	PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_TOKEN);
-	PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_PUNC);
-	PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_ITN);
-	PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_INTRESULT);
 
-	switch (cur_provider) {
-	case SP_Hwcloud:
-		PROPERTY_SET_VISIBLE(props, PROP_HWCLOUD_PROJID);
-		PROPERTY_SET_VISIBLE(props, PROP_HWCLOUD_TOKEN);
-		break;
-	case SP_Xfyun:
-		PROPERTY_SET_VISIBLE(props, PROP_XF_APPID);
-		PROPERTY_SET_VISIBLE(props, PROP_XF_APIKEY);
-		PROPERTY_SET_VISIBLE(props, PROP_XF_PUNC);
-		PROPERTY_SET_VISIBLE(props, PROP_XF_PD);
-		break;
-	case SP_Aliyun:
-		PROPERTY_SET_VISIBLE(props, PROP_ALINLS_APPKEY);
-		PROPERTY_SET_VISIBLE(props, PROP_ALINLS_TOKEN);
-		PROPERTY_SET_VISIBLE(props, PROP_ALINLS_PUNC);
-		PROPERTY_SET_VISIBLE(props, PROP_ALINLS_ITN);
-		PROPERTY_SET_VISIBLE(props, PROP_ALINLS_INTRESULT);
-		break;
-	case SP_Sogou:
-		break;
-	default:
-		break;
+	for (auto iter : ASRBuilders.getAllBuilder()) {
+		iter.second->hideProperties(props);
+	}
+
+	auto cur_builder = ASRBuilders.getBuilder(cur_provider);
+	if (cur_builder) {
+		cur_builder->showProperties(props);
 	}
 
 	return true;
@@ -112,22 +93,13 @@ static bool translate_provider_modified(void *priv, obs_properties_t *props,
 {
 	int cur_provider = obs_data_get_int(settings, PROP_TRANS_PROVIDER);
 	auto s = (struct autosub_filter *)priv;
-	s->xfTransBuilder.hideProperties(props);
-	s->gsTransBuilder.hideProperties(props);
-	s->xfTransBuilder.setNormalTrans();
-	switch (cur_provider) {
-	case Trans_SP_XfNiu:
-		s->xfTransBuilder.setNiuTrans();
-	case Trans_SP_Xfyun:
-		s->xfTransBuilder.showProperties(props);
-		break;
-	case Trans_SP_GScript:
-		s->gsTransBuilder.showProperties(props);
-		break;
-	default:
-		break;
+	for (auto iter : TransBuilders.getAllBuilder()) {
+		iter.second->hideProperties(props);
 	}
-
+	auto cur_builder = TransBuilders.getBuilder(cur_provider);
+	if (cur_builder) {
+		cur_builder->showProperties(props);
+	}
 	return true;
 }
 
@@ -140,8 +112,9 @@ static bool translate_enable_modified(void *priv, obs_properties_t *props,
 	if (!enabled) {
 		PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_PROVIDER);
 		PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_TARGET_TEXT_SOURCE);
-		s->xfTransBuilder.hideProperties(props);
-		s->gsTransBuilder.hideProperties(props);
+		for (auto iter : TransBuilders.getAllBuilder()) {
+			iter.second->hideProperties(props);
+		}
 	} else {
 		PROPERTY_SET_VISIBLE(props, PROP_TRANS_PROVIDER);
 		PROPERTY_SET_VISIBLE(props, PROP_TRANS_TARGET_TEXT_SOURCE);
@@ -151,6 +124,7 @@ static bool translate_enable_modified(void *priv, obs_properties_t *props,
 }
 
 #undef PROPERTY_SET_UNVISIBLE
+#undef PROPERTY_SET_VISIBLE
 
 obs_properties_t *autosub_filter_getproperties(void *data)
 {
@@ -175,67 +149,36 @@ obs_properties_t *autosub_filter_getproperties(void *data)
 						 T_PROVIDER,
 						 OBS_COMBO_TYPE_LIST,
 						 OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(providers, T_SP_XFYUN, SP_Xfyun);
-	obs_property_list_add_int(providers, T_SP_SOGOU, SP_Sogou);
-	obs_property_list_add_int(providers, T_SP_HWCLOUD, SP_Hwcloud);
-	obs_property_list_add_int(providers, T_SP_ALIYUN, SP_Aliyun);
+	for (auto iter : ASRBuilders.getAllBuilder()) {
+		obs_property_list_add_int(
+			providers,
+			obs_module_text(ASRBuilders.getLocaleLabel(iter.first)),
+			iter.first);
+	}
 
 	obs_property_set_modified_callback(providers, provider_modified);
 
-	//XFYun
-	auto t = obs_properties_add_text(props, PROP_XF_APPID, T_APPID,
-					 OBS_TEXT_DEFAULT);
-	obs_property_set_visible(t, false);
-	t = obs_properties_add_text(props, PROP_XF_APIKEY, T_APIKEY,
-				    OBS_TEXT_DEFAULT);
-	obs_property_set_visible(t, false);
-
-	t = obs_properties_add_bool(props, PROP_XF_PUNC, T_XF_PUNC);
-	obs_property_set_visible(t, false);
-	t = obs_properties_add_list(props, PROP_XF_PD, T_XF_PD,
-				    OBS_COMBO_TYPE_LIST,
-				    OBS_COMBO_FORMAT_STRING);
-	obs_property_set_visible(t, false);
-	obs_property_list_add_string(t, T_XF_PD_NONE, "none");
-	obs_property_list_add_string(t, T_XF_PD_COURT, "court");
-	obs_property_list_add_string(t, T_XF_PD_EDU, "edu");
-	obs_property_list_add_string(t, T_XF_PD_FINANCE, "finance");
-	obs_property_list_add_string(t, T_XF_PD_MEDICAL, "medical");
-	obs_property_list_add_string(t, T_XF_PD_TECH, "tech");
-
-	//HWCloud
-	t = obs_properties_add_text(props, PROP_HWCLOUD_PROJID, T_PROJECT_ID,
-				    OBS_TEXT_DEFAULT);
-	obs_property_set_visible(t, false);
-	t = obs_properties_add_text(props, PROP_HWCLOUD_TOKEN, T_TOKEN,
-				    OBS_TEXT_MULTILINE);
-	obs_property_set_visible(t, false);
-
-	//AliNLS
-	t = obs_properties_add_text(props, PROP_ALINLS_APPKEY, T_APPKEY,
-				    OBS_TEXT_DEFAULT);
-	obs_property_set_visible(t, false);
-	t = obs_properties_add_text(props, PROP_ALINLS_TOKEN, T_TOKEN,
-				    OBS_TEXT_DEFAULT);
-	obs_property_set_visible(t, false);
-	t = obs_properties_add_bool(props, PROP_ALINLS_PUNC, T_ALINLS_PUNC);
-	obs_property_set_visible(t, false);
-	t = obs_properties_add_bool(props, PROP_ALINLS_ITN, T_ALINLS_ITN);
-	obs_property_set_visible(t, false);
-	t = obs_properties_add_bool(props, PROP_ALINLS_INTRESULT,
-				    T_ALINLS_INTRESULT);
-	obs_property_set_visible(t, false);
+	//ASR provider properties
+	for (auto iter : ASRBuilders.getAllBuilder()) {
+		iter.second->getProperties(props);
+	}
 
 	//Translate
-	t = obs_properties_add_bool(props, PROP_TRANS_ENABLED, T_TRANS_ENABLE);
+	obs_property_t *t = obs_properties_add_bool(props, PROP_TRANS_ENABLED,
+						    T_TRANS_ENABLE);
 	obs_property_set_modified_callback2(t, translate_enable_modified, data);
 	providers = obs_properties_add_list(props, PROP_TRANS_PROVIDER,
 					    T_PROVIDER, OBS_COMBO_TYPE_LIST,
 					    OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(providers, T_TRANS_SP_XFYUN, Trans_SP_Xfyun);
-	obs_property_list_add_int(providers, T_TRANS_SP_XFNIU, Trans_SP_XfNiu);
-	obs_property_list_add_int(providers, T_TRANS_SP_GSCRIPT,
-				  Trans_SP_GScript);
+
+	for (auto iter : TransBuilders.getAllBuilder()) {
+		obs_property_list_add_int(
+			providers,
+			obs_module_text(
+				TransBuilders.getLocaleLabel(iter.first)),
+			iter.first);
+	}
+
 	obs_property_set_modified_callback2(providers,
 					    translate_provider_modified, data);
 
@@ -248,15 +191,15 @@ obs_properties_t *autosub_filter_getproperties(void *data)
 
 	obs_enum_sources(add_sources, sources);
 
-	//Translate XFYun
-	s->xfTransBuilder.getProperties(props);
-	s->gsTransBuilder.getProperties(props);
+	//Translate provider properties
+	for (auto iter : TransBuilders.getAllBuilder()) {
+		iter.second->getProperties(props);
+	}
 	return props;
 }
 
 void autosub_filter_getdefaults(obs_data_t *settings)
 {
-	obs_data_set_default_int(settings, PROP_PROVIDER, SP_Xfyun);
 	obs_data_set_default_int(settings, PROP_MAX_COUNT, 0);
 	obs_data_set_default_int(settings, PROP_CLEAR_TIMEOUT, 0);
 }
@@ -319,110 +262,16 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 		s->provider = provider;
 		s->refresh = true;
 	}
-	const char *appid, *apikey, *project_id, *token, *appkey, *pd;
-	bool punc, inter_result, itn;
-	switch (s->provider) {
-	case SP_Xfyun:
-		appid = obs_data_get_string(settings, PROP_XF_APPID);
-		apikey = obs_data_get_string(settings, PROP_XF_APIKEY);
-		punc = obs_data_get_bool(settings, PROP_XF_PUNC);
-		pd = obs_data_get_string(settings, PROP_XF_PD);
-		if (strcmp(appid, "") == 0 || strcmp(apikey, "") == 0) {
-			s->refresh = false;
-			break;
-		}
-		if (s->xfyun.apiKey == apikey && s->xfyun.appId == appid) {
-			s->refresh = s->refresh || false;
-			break;
-		}
-		s->xfyun.appId = appid;
-		s->xfyun.apiKey = apikey;
-		s->xfyun.punc = punc;
-		s->xfyun.pd = pd;
-		s->refresh = true;
-		break;
-	case SP_Hwcloud:
-		project_id = obs_data_get_string(settings, PROP_HWCLOUD_PROJID);
-		token = obs_data_get_string(settings, PROP_HWCLOUD_TOKEN);
-		if (strcmp(project_id, "") == 0 || strcmp(token, "") == 0) {
-			s->refresh = false;
-			break;
-		}
-		if (s->hwcloud.project_id == project_id &&
-		    s->hwcloud.token == token) {
-			s->refresh = s->refresh || false;
-			break;
-		}
-		s->hwcloud.project_id = project_id;
-		s->hwcloud.token = token;
-		s->refresh = true;
-		break;
-	case SP_Aliyun:
-		appkey = obs_data_get_string(settings, PROP_ALINLS_APPKEY);
-		token = obs_data_get_string(settings, PROP_ALINLS_TOKEN);
-		punc = obs_data_get_bool(settings, PROP_ALINLS_PUNC);
-		itn = obs_data_get_bool(settings, PROP_ALINLS_ITN);
-		inter_result =
-			obs_data_get_bool(settings, PROP_ALINLS_INTRESULT);
-		if (strcmp(appkey, "") == 0 || strcmp(token, "") == 0) {
-			s->refresh = false;
-			break;
-		}
-		s->alinls.appKey = appkey;
-		s->alinls.token = token;
-		s->alinls.punc = punc;
-		s->alinls.itn = itn;
-		s->alinls.int_result = inter_result;
-		s->refresh = true;
-		break;
-	}
-
-	if (!s->refresh)
-		return;
-	s->refresh = false;
+	ASRBuilderBase *asrBuilder =
+		static_cast<ASRBuilderBase *>(ASRBuilders.getBuilder(provider));
+	std::shared_ptr<ASRBase> new_asr;
 	s->lock_asr.lock();
-	if (s->asr) {
-		s->asr->stop();
-		delete s->asr;
-		s->asr = nullptr;
-		s->running = false;
-	}
-	switch (s->provider) {
-	case SP_Xfyun:
-		s->asr = new XFRtASR(s->xfyun.appId, s->xfyun.apiKey);
-		if (s->xfyun.pd != "none") {
-			s->asr->setParam("pd", s->xfyun.pd);
+	if (asrBuilder) {
+		asrBuilder->updateSettings(settings);
+		new_asr.reset(asrBuilder->build());
+		if (new_asr) {
+			s->asr = new_asr;
 		}
-		if (!s->xfyun.punc) {
-			s->asr->setParam("punc", "0");
-		}
-		break;
-	case SP_Hwcloud:
-		s->asr = new HwCloudRASR(s->hwcloud.project_id,
-					 s->hwcloud.token);
-		break;
-	case SP_Aliyun:
-		s->asr = new AliNLS(s->alinls.appKey, s->alinls.token);
-		if (s->alinls.punc) {
-			s->asr->setParam("enable_punctuation_prediction",
-					 "true");
-		}
-		if (s->alinls.itn) {
-			s->asr->setParam("enable_inverse_text_normalization",
-					 "true");
-		}
-		if (s->alinls.int_result) {
-			s->asr->setParam("enable_intermediate_result", "true");
-		}
-		break;
-	default:
-		blog(LOG_WARNING, "Unsupported ASR provider id: %d",
-		     s->provider);
-		break;
-	}
-	if (!s->asr) {
-		s->lock_asr.unlock();
-		return;
 	}
 
 	std::function<void(QString)> setText([=](QString str) {
@@ -443,43 +292,45 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 		obs_source_update(target, text_settings);
 		obs_source_release(target);
 	});
+	if (s->asr) {
+		s->asr->setErrorCallback(
+			[=](ASRBase::ErrorType type, QString msg) {
+				static bool prevIsApiError = false;
+				blog(LOG_INFO, "Websocket error: %d, %s", type,
+				     msg.toStdString().c_str());
+				QString errorMsg;
+				switch (type) {
+				case ASRBase::ERROR_API:
+					errorMsg = "API Error";
+					prevIsApiError = true;
+					break;
+				case ASRBase::ERROR_SOCKET:
+					if (prevIsApiError) {
+						return;
+					}
+					errorMsg = "Websocket Error";
+					break;
+				default:
+					errorMsg = "Unknown error";
+					break;
+				}
+				if (!msg.isEmpty()) {
+					errorMsg = errorMsg + ": " + msg;
+				}
+				setText(errorMsg);
+			});
 
-	s->asr->setErrorCallback([=](ASRBase::ErrorType type, QString msg) {
-		static bool prevIsApiError = false;
-		blog(LOG_INFO, "Websocket error: %d, %s", type,
-		     msg.toStdString().c_str());
-		QString errorMsg;
-		switch (type) {
-		case ASRBase::ERROR_API:
-			errorMsg = "API Error";
-			prevIsApiError = true;
-			break;
-		case ASRBase::ERROR_SOCKET:
-			if (prevIsApiError) {
-				return;
-			}
-			errorMsg = "Websocket Error";
-			break;
-		default:
-			errorMsg = "Unknown error";
-			break;
-		}
-		if (!msg.isEmpty()) {
-			errorMsg = errorMsg + ": " + msg;
-		}
-		setText(errorMsg);
-	});
+		s->asr->setConnectedCallback([=]() {
+			blog(LOG_INFO, "Websocket connected.");
+			setText("Connected");
+		});
 
-	s->asr->setConnectedCallback([=]() {
-		blog(LOG_INFO, "Websocket connected.");
-		setText("Connected");
-	});
+		s->asr->setDisconnectedCallback(
+			[=]() { blog(LOG_INFO, "Websocket disconnected."); });
 
-	s->asr->setDisconnectedCallback(
-		[=]() { blog(LOG_INFO, "Websocket disconnected."); });
-
-	s->asr->start();
-	s->running = true;
+		s->asr->start();
+		s->running = true;
+	}
 	s->lock_asr.unlock();
 
 	bool trans_enabled = obs_data_get_bool(settings, PROP_TRANS_ENABLED);
@@ -487,27 +338,11 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 
 	int trans_sp = obs_data_get_int(settings, PROP_TRANS_PROVIDER);
 	s->trans_provider = trans_sp;
-	switch (trans_sp) {
-	case Trans_SP_Xfyun:
-	case Trans_SP_XfNiu:
-		s->xfTransBuilder.updateSettings(settings);
-		break;
-	case Trans_SP_GScript:
-		s->gsTransBuilder.updateSettings(settings);
-		break;
-	}
+	TransBuilderBase *transBuilder = static_cast<TransBuilderBase *>(
+		TransBuilders.getBuilder(trans_sp));
 	std::shared_ptr<TransBase> new_translator;
-	TransBuilderBase *transBuilder = nullptr;
-	switch (trans_sp) {
-	case Trans_SP_Xfyun:
-	case Trans_SP_XfNiu:
-		transBuilder = &s->xfTransBuilder;
-		break;
-	case Trans_SP_GScript:
-		transBuilder = &s->gsTransBuilder;
-		break;
-	}
 	if (transBuilder) {
+		transBuilder->updateSettings(settings);
 		new_translator.reset(transBuilder->build());
 		if (new_translator) {
 			s->lock_trans.lock();
@@ -571,25 +406,34 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 		s->translator->setErrorCallback(
 			[=](QString data) { setTransText(data); });
 	}
-	s->asr->setResultCallback([=](QString str, int typ) {
-		if (typ == 0) {
-			if (s->enable_trans) {
-				s->lock_trans.lock();
-				if (s->translator && transBuilder)
-					emit s->translator->requestTranslate(
-						transBuilder->getFromLang(),
-						transBuilder->getToLang(), str);
-				s->lock_trans.unlock();
+
+	s->lock_asr.lock();
+	if (s->asr) {
+		s->asr->setResultCallback([=](QString str, int typ) {
+			if (typ == 0) {
+				if (s->enable_trans) {
+					s->lock_trans.lock();
+					if (s->translator && transBuilder)
+						emit s->translator->requestTranslate(
+							transBuilder
+								->getFromLang(),
+							transBuilder
+								->getToLang(),
+							str);
+					s->lock_trans.unlock();
+				}
+				blog(LOG_INFO, "Result: %s",
+				     str.toStdString().c_str());
+				s->last_update_time = os_gettime_ns();
 			}
-			blog(LOG_INFO, "Result: %s", str.toStdString().c_str());
-			s->last_update_time = os_gettime_ns();
-		}
-		int t = s->max_count;
-		if (t != 0 && str.count() > t) {
-			str = str.right(t);
-		}
-		setText(str);
-	});
+			int t = s->max_count;
+			if (t != 0 && str.count() > t) {
+				str = str.right(t);
+			}
+			setText(str);
+		});
+	}
+	s->lock_asr.unlock();
 }
 
 void autosub_filter_shown(void *data) {}
@@ -621,7 +465,6 @@ void autosub_filter_destroy(void *data)
 	s->running = false;
 	if (s->asr) {
 		s->asr->stop();
-		delete s->asr;
 	}
 	s->lock_asr.unlock();
 	if (s->resampler) {

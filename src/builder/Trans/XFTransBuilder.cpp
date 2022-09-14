@@ -18,6 +18,18 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #include "XFTransBuilder.h"
 
+#define XF_TRANS_PROVIDER_ID 0x1002U
+#define XF_TRANS_NIU_PROVIDER_ID 0x1003U
+
+#define L_TRANS_SP_XFYUN "AutoSub.Trans.SP.Xfyun"
+#define L_TRANS_SP_XFNIU "AutoSub.Trans.SP.XfyunNiu"
+
+#define PROP_TRANS_XF_APPID _PROP("xf_appid")
+#define PROP_TRANS_XF_APIKEY _PROP("xf_apikey")
+#define PROP_TRANS_XF_APISECRET _PROP("xf_apisecret")
+#define PROP_TRANS_XF_FROMLANG _PROP("xf_fromlang")
+#define PROP_TRANS_XF_TOLANG _PROP("xf_tolang")
+
 static LangList _langList[] = {
     {"cn",  _TKEY(Trans.Chinese)},
     {"en",  _TKEY(Trans.English)},
@@ -32,6 +44,7 @@ static LangList _langList[] = {
 };
 
 const LangList *XFTransBuilder::langList = _langList;
+
 
 void XFTransBuilder::getProperties(obs_properties_t *props) {
     obs_property_t *t;
@@ -54,6 +67,7 @@ void XFTransBuilder::getProperties(obs_properties_t *props) {
     }
 
 }
+
 void XFTransBuilder::showProperties(obs_properties_t *props) {
     PROPERTY_SET_VISIBLE(props, PROP_TRANS_XF_APPID);
     PROPERTY_SET_VISIBLE(props, PROP_TRANS_XF_APISECRET);
@@ -61,6 +75,7 @@ void XFTransBuilder::showProperties(obs_properties_t *props) {
     PROPERTY_SET_VISIBLE(props, PROP_TRANS_XF_FROMLANG);
     PROPERTY_SET_VISIBLE(props, PROP_TRANS_XF_TOLANG);
 }
+
 void XFTransBuilder::hideProperties(obs_properties_t *props) {
     PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_XF_APPID);
     PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_XF_APISECRET);
@@ -69,22 +84,14 @@ void XFTransBuilder::hideProperties(obs_properties_t *props) {
     PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_XF_TOLANG);
 }
 
-#define CHECK_CHANGE_SET_ALL(dst, src, changed) \
-do { \
-    if (dst != src) { \
-        changed = true; \
-        dst = src; \
-    } \
-} while(0) \
-
 void XFTransBuilder::updateSettings(obs_data_t *settings) {
-    QString appId, apiKey, apiSecret;
-    appId = obs_data_get_string(settings, PROP_TRANS_XF_APPID);
-    apiKey = obs_data_get_string(settings, PROP_TRANS_XF_APIKEY);
-    apiSecret = obs_data_get_string(settings, PROP_TRANS_XF_APISECRET);
-    CHECK_CHANGE_SET_ALL(this->appId, appId, needBuild);
-    CHECK_CHANGE_SET_ALL(this->apiKey, apiKey, needBuild);
-    CHECK_CHANGE_SET_ALL(this->apiSecret, apiSecret, needBuild);
+    QString _appId, _apiKey, _apiSecret;
+    _appId = obs_data_get_string(settings, PROP_TRANS_XF_APPID);
+    _apiKey = obs_data_get_string(settings, PROP_TRANS_XF_APIKEY);
+    _apiSecret = obs_data_get_string(settings, PROP_TRANS_XF_APISECRET);
+    CHECK_CHANGE_SET_ALL(this->appId, _appId, needBuild);
+    CHECK_CHANGE_SET_ALL(this->apiKey, _apiKey, needBuild);
+    CHECK_CHANGE_SET_ALL(this->apiSecret, _apiSecret, needBuild);
     fromLang = obs_data_get_string(settings, PROP_TRANS_XF_FROMLANG);
     toLang = obs_data_get_string(settings, PROP_TRANS_XF_TOLANG);
 }
@@ -93,13 +100,6 @@ void XFTransBuilder::getDefaults(obs_data_t *settings) {
     obs_data_set_default_string(settings, PROP_TRANS_XF_APPID, "");
     obs_data_set_default_string(settings, PROP_TRANS_XF_APISECRET, "");
     obs_data_set_default_string(settings, PROP_TRANS_XF_APIKEY, "");
-}
-
-void XFTransBuilder::setNormalTrans() {
-    isNiuTrans = false;
-}
-void XFTransBuilder::setNiuTrans() {
-    isNiuTrans = true;
 }
 
 TransBase *XFTransBuilder::build() {
@@ -113,3 +113,10 @@ TransBase *XFTransBuilder::build() {
         return new XFTrans(appId, apiKey, apiSecret, TRANS_ENDPOINT);
     }
 }
+
+
+static XFTransBuilder xfTransBuilder(false); 
+static BuilderRegister<TransBase> register_xf_trans(&TransBuilders, &xfTransBuilder, XF_TRANS_PROVIDER_ID, L_TRANS_SP_XFYUN);
+
+static XFTransBuilder xfNiuTransBuilder(true); 
+static BuilderRegister<TransBase> register_xf_niu_trans(&TransBuilders, &xfNiuTransBuilder, XF_TRANS_NIU_PROVIDER_ID, L_TRANS_SP_XFNIU);

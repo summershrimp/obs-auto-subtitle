@@ -18,6 +18,14 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #include "GSTransBuilder.h"
 
+#define GS_TRANS_PROVIDER_ID 0x1001U
+#define L_TRANS_SP_GSCRIPT "AutoSub.Trans.SP.GoogleScript"
+
+#define PROP_TRANS_GS_DEPLOYID _PROP("gs_deployid")
+#define PROP_TRANS_GS_FROMLANG _PROP("gs_fromlang")
+#define PROP_TRANS_GS_TOLANG _PROP("gs_tolang")
+
+
 static LangList _langList[] = {
     {"",  _TKEY(Trans.Auto)},
     {"zh-cn",  _TKEY(Trans.Chinese)},
@@ -63,18 +71,10 @@ void GSTransBuilder::hideProperties(obs_properties_t *props) {
     PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_GS_TOLANG);
 }
 
-#define CHECK_CHANGE_SET_ALL(dst, src, changed) \
-do { \
-    if (dst != src) { \
-        changed = true; \
-        dst = src; \
-    } \
-} while(0) \
-
 void GSTransBuilder::updateSettings(obs_data_t *settings) {
-    QString deployId, apiKey, apiSecret;
-    deployId = obs_data_get_string(settings, PROP_TRANS_GS_DEPLOYID);
-    CHECK_CHANGE_SET_ALL(this->deployId, deployId, needBuild);
+    QString _deployId, apiKey, apiSecret;
+    _deployId = obs_data_get_string(settings, PROP_TRANS_GS_DEPLOYID);
+    CHECK_CHANGE_SET_ALL(this->deployId, _deployId, needBuild);
     fromLang = obs_data_get_string(settings, PROP_TRANS_GS_FROMLANG);
     toLang = obs_data_get_string(settings, PROP_TRANS_GS_TOLANG);
 }
@@ -90,3 +90,7 @@ TransBase *GSTransBuilder::build() {
     needBuild = false;
     return new GScriptTrans(deployId);
 }
+
+
+static GSTransBuilder gsTransBuilder; 
+static BuilderRegister<TransBase> register_gs(&TransBuilders, &gsTransBuilder, GS_TRANS_PROVIDER_ID, L_TRANS_SP_GSCRIPT);
