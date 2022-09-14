@@ -16,30 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
 
-#ifndef OBS_AUTOSUB_TRANS_BUILDER_BASE_H
-#define OBS_AUTOSUB_TRANS_BUILDER_BASE_H
+#include "ASRBuilderBase.h"
+#include "TransBuilderBase.h"
 
-#include "PropBuilderBase.h"
-#include "../vendor/Trans/TransBase.h"
-
-class TransBuilderBase: public PropBuilderBase<TransBase> { 
-public:
-    QString getFromLang() {
-        return fromLang;
-    }
-    QString getToLang() {
-        return toLang;
-    }
-protected:
-    QString fromLang;
-    QString toLang;
-};
-
-#define _PROP(name) "autosub_filter_trans_" # name
-
-struct LangList {
-    const char *lang_id;
-    const char *lang_t;
-};
-
-#endif
+BuilderHolder<ASRBase> ASRBuilders;
+BuilderHolder<TransBase> TransBuilders;

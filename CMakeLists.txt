@@ -21,8 +21,12 @@ set(LINUX_MAINTAINER_EMAIL "xm1994@gmail.com")
 set(obs-auto-subtitle_SOURCES
     src/obs-auto-subtitle.cpp
     src/obs-autosub-filter.cpp
-    src/builder/XFTransBuilder.cpp
-    src/builder/GSTransBuilder.cpp
+    src/builder/base/PropBuilders.cpp
+    src/builder/ASR/AliNLSBuilder.cpp
+    src/builder/ASR/HwCloudRASRBuilder.cpp
+    src/builder/ASR/XFRtASRBuilder.cpp
+    src/builder/Trans/XFTransBuilder.cpp
+    src/builder/Trans/GSTransBuilder.cpp
     src/vendor/ASR/ASRBase.cpp
     src/vendor/ASR/XFRtASR.cpp
     src/vendor/ASR/HwCloudRASR.cpp
@@ -31,20 +35,15 @@ set(obs-auto-subtitle_SOURCES
     src/vendor/Trans/XFTrans.cpp
     src/vendor/Trans/GScriptTrans.cpp)
 
-set(obs-auto-subtitle_HEADERS
-    src/obs-auto-subtitle.h
-    src/obs-autosub-filter.h
-    src/builder/PropBuilderBase.h
-    src/builder/TransBuilderBase.h
-    src/builder/XFTransBuilder.h
-    src/builder/GSTransBuilder.h
-    src/vendor/ASR/ASRBase.h
-    src/vendor/ASR/XFRtASR.h
-    src/vendor/ASR/HwCloudRASR.h
-    src/vendor/ASR/AliNLS.h
-    src/vendor/Trans/TransBase.h
-    src/vendor/Trans/XFTrans.h
-    src/vendor/Trans/GScriptTrans.h)
+if(WIN32)
+  set(obs-auto-subtitle_SOURCES
+      ${obs-auto-subtitle_SOURCES}
+      src/builder/ASR/MSSAPIBuilder.cpp
+      src/vendor/ASR/mssapi-captions/captions-handler.cpp
+      src/vendor/ASR/mssapi-captions/captions-mssapi.cpp
+      src/vendor/ASR/mssapi-captions/captions-mssapi-stream.cpp
+      src/vendor/ASR/mssapi.cpp)
+endif()
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${obs-auto-subtitle_SOURCES})
 

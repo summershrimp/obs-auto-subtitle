@@ -16,18 +16,17 @@ You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
 
-#ifndef OBS_AUTOSUB_GSTRANS_BUILDER_H
-#define OBS_AUTOSUB_GSTRANS_BUILDER_H
+#ifndef OBS_AUTOSUB_XFTRANS_BUILDER_H
+#define OBS_AUTOSUB_XFTRANS_BUILDER_H
 
 #include <QString>
 
-#include "TransBuilderBase.h"
-#include "../vendor/Trans/GScriptTrans.h"
+#include "../base/TransBuilderBase.h"
+#include "../../vendor/Trans/XFTrans.h"
 
-
-
-class GSTransBuilder : public TransBuilderBase {
+class XFTransBuilder : public TransBuilderBase {
 public:
+    XFTransBuilder(bool isNiu): isNiuTrans(isNiu) {};
     void getProperties(obs_properties_t *props);
     void showProperties(obs_properties_t *props);
     void hideProperties(obs_properties_t *props);
@@ -39,13 +38,12 @@ protected:
     static const LangList *langList;
 
 private:
-    QString deployId;
+    QString appId;
+    QString apiKey;
+    QString apiSecret;
+    bool isNiuTrans = false;
     bool needBuild = false;
 };
-
-#define PROP_TRANS_GS_DEPLOYID _PROP("gs_deployid")
-#define PROP_TRANS_GS_FROMLANG _PROP("gs_fromlang")
-#define PROP_TRANS_GS_TOLANG _PROP("gs_tolang")
 
 #endif
 
