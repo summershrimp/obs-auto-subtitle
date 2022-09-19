@@ -4,20 +4,21 @@ project(obs-auto-subtitle VERSION 0.3.0)
 add_compile_definitions(OBS_SSP_VERSION="${CMAKE_PROJECT_VERSION}")
 
 set(CMAKE_CXX_STANDARD 14)
-
-set(CMAKE_PREFIX_PATH "${QTDIR}")
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
 add_definitions(-DASIO_STANDALONE)
 
-if (WIN32 OR APPLE)
-	include(external/FindLibObs.cmake)
-endif()
+# if (WIN32 OR APPLE)
+# 	include(external/FindLibObs.cmake)
+# endif()
+
 
 find_package(LibObs REQUIRED)
-find_package(Qt5 REQUIRED Core Widgets Network WebSockets)
+find_package(obs-frontend-api REQUIRED)
+find_package(Qt6 COMPONENTS Core Widgets Network WebSockets)
+find_package(Qt6 COMPONENTS Core Widgets Network WebSockets)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(ARCH 64)
@@ -56,32 +57,31 @@ set(obs-auto-subtitle_HEADERS
 add_library(obs-auto-subtitle MODULE
 	${obs-auto-subtitle_SOURCES}
 	${obs-auto-subtitle_HEADERS})
-
-include_directories(
-		"${LIBOBS_INCLUDE_DIR}/../UI/obs-frontend-api"
-		${Qt5Core_INCLUDES}
-		${Qt5Widgets_INCLUDES}
-		${Qt5Network_INCLUDES}
-		${Qt5WebSockets_INCLUDES})
+# include_directories(
+# 		"${LIBOBS_INCLUDE_DIR}/../UI/obs-frontend-api"
+# 		${Qt5Core_INCLUDES}
+# 		${Qt5Widgets_INCLUDES}
+# 		${Qt5Network_INCLUDES}
+# 		${Qt5WebSockets_INCLUDES})
 
 target_link_libraries(obs-auto-subtitle
-		libobs
-		Qt5::Core
-		Qt5::Widgets
-		Qt5::Network
-		Qt5::WebSockets)
+		OBS::libobs
+		OBS::obs-frontend-api
+		OBS::w32-pthreads
+		Qt6::Core
+		Qt6::Widgets
+		Qt6::Network
+		Qt6::WebSockets)
 
 # Windows
 if(WIN32)
-	set(OBS_FRONTEND_LIB "OBS_FRONTEND_LIB-NOTFOUND" CACHE FILEPATH "OBS frontend library")
-	if(OBS_FRONTEND_LIB EQUAL "OBS_FRONTEND_LIB-NOTFOUND")
-		message(FATAL_ERROR "Could not find OBS Frontend API\'s library !")
-	endif()
-
 	string(REGEX REPLACE "/RTC(su|[1su])" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 	message("CXX release flags: ${CMAKE_CXX_FLAGS_RELEASE}")
-
+	
 	add_definitions(-D_WEBSOCKETPP_CPP11_STL_)
+
+	find_package(w32-pthreads REQUIRED)
+	target_link_libraries(obs-auto-subtitle OBS::w32-pthreads)
 
 	if(ARCH EQUAL 64)
 		set(OBS_ARCH_NAME "64bit")
@@ -92,65 +92,12 @@ if(WIN32)
 		add_definitions(/arch:SSE2)
 	endif()
 
-	find_package(w32-pthreads REQUIRED)
-
-	target_link_libraries(obs-auto-subtitle w32-pthreads)
-
-	set(RELEASE_DIR "${PROJECT_SOURCE_DIR}/release")
-	add_custom_command(TARGET obs-auto-subtitle POST_BUILD
-		COMMAND if $<CONFIG:Release>==1 (
-			"${CMAKE_COMMAND}" -E make_directory
-				"${RELEASE_DIR}/bin/${OBS_ARCH_NAME}"
-				"${RELEASE_DIR}/data/obs-plugins/obs-auto-subtitle"
-				"${RELEASE_DIR}/obs-plugins/${OBS_ARCH_NAME}")
-
-		COMMAND if $<CONFIG:Release>==1 (
-			"${CMAKE_COMMAND}" -E copy_directory
-				"${PROJECT_SOURCE_DIR}/data"
-				"${RELEASE_DIR}/data/obs-plugins/obs-auto-subtitle")
-
-		COMMAND if $<CONFIG:Release>==1 (
-			"${CMAKE_COMMAND}" -E copy
-				"$<TARGET_FILE:obs-auto-subtitle>"
-				"${RELEASE_DIR}/obs-plugins/${OBS_ARCH_NAME}")
-
-			# If config is RelWithDebInfo, package release files
-		COMMAND if $<CONFIG:RelWithDebInfo>==1 (
-			"${CMAKE_COMMAND}" -E make_directory
-				"${RELEASE_DIR}/bin/${OBS_ARCH_NAME}"
-				"${RELEASE_DIR}/data/obs-plugins/obs-auto-subtitle"
-				"${RELEASE_DIR}/obs-plugins/${OBS_ARCH_NAME}")
-
-		COMMAND if $<CONFIG:RelWithDebInfo>==1 (
-			"${CMAKE_COMMAND}" -E copy_directory
-				"${PROJECT_SOURCE_DIR}/data"
-				"${RELEASE_DIR}/data/obs-plugins/obs-auto-subtitle")
-
-		COMMAND if $<CONFIG:RelWithDebInfo>==1 (
-			"${CMAKE_COMMAND}" -E copy
-				"$<TARGET_FILE:obs-auto-subtitle>"
-				"${RELEASE_DIR}/obs-plugins/${OBS_ARCH_NAME}")
-
-			COMMAND if $<CONFIG:RelWithDebInfo>==1 (
-			"${CMAKE_COMMAND}" -E copy
-				"$<TARGET_PDB_FILE:obs-auto-subtitle>"
-				"${RELEASE_DIR}/obs-plugins/${OBS_ARCH_NAME}")
-
-		# Copy to obs-studio dev environment for immediate testing
-		COMMAND if $<CONFIG:Debug>==1 (
-			"${CMAKE_COMMAND}" -E copy
-				"$<TARGET_FILE:obs-auto-subtitle>"
-				"${LIBOBS_INCLUDE_DIR}/../${OBS_BUILDDIR_ARCH}/rundir/$<CONFIG>/obs-plugins/${OBS_ARCH_NAME}")
-
-		COMMAND if $<CONFIG:Debug>==1 (
-			"${CMAKE_COMMAND}" -E make_directory
-				"${LIBOBS_INCLUDE_DIR}/../${OBS_BUILDDIR_ARCH}/rundir/$<CONFIG>/data/obs-plugins/obs-auto-subtitle")
-
-		COMMAND if $<CONFIG:Debug>==1 (
-			"${CMAKE_COMMAND}" -E copy_directory
-				"${PROJECT_SOURCE_DIR}/data"
-				"${LIBOBS_INCLUDE_DIR}/../${OBS_BUILDDIR_ARCH}/rundir/$<CONFIG>/data/obs-plugins/obs-auto-subtitle")
-	)
+	install(TARGETS obs-auto-subtitle LIBRARY DESTINATION "obs-plugins/${OBS_ARCH_NAME}")
+	get_target_property(qwebsocket Qt6::WebSockets LOCATION_Release)
+	install(FILES ${qwebsocket} DESTINATION "bin/${OBS_ARCH_NAME}")
+	install(FILES "${QT6_INSTALL_PREFIX}/plugins/tls/qschannelbackend.dll" DESTINATION "bin/${OBS_ARCH_NAME}/tls")
+	install(FILES "${QT6_INSTALL_PREFIX}/plugins/tls/qcertonlybackend.dll" DESTINATION "bin/${OBS_ARCH_NAME}/tls")
+	install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/ DESTINATION "data/obs-plugins/obs-auto-subtitle")
 endif()
 
 # OSX
@@ -169,11 +116,6 @@ if(UNIX AND NOT APPLE)
 	else()
 		set(ARCH_NAME "i686")
 	endif()
-
-	set_target_properties(obs-auto-subtitle PROPERTIES PREFIX "")
-
-	target_link_libraries(obs-auto-subtitle
-		obs-frontend-api)
 
 	file(GLOB locale_files data/locale/*.ini)
         execute_process(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE UNAME_MACHINE)

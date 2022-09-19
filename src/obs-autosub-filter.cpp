@@ -566,7 +566,7 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         }
         int t = s->max_count;
         if(t != 0 && str.count() > t){
-            str = str.rightRef(t).toString();
+            str = str.right(t);
         }
         setText(str);
     });

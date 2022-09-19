@@ -1,0 +1,25 @@
+name: 'BUILD'
+
+on:
+  push:
+    paths-ignore: ['**.md']
+    branches:
+      - master
+      - 'release/**'
+    tags: ['*']
+  pull_request:
+    paths-ignore: ['**.md']
+    branches: [master]
+
+env:
+  CACHE_REVISION: '006'
+  QT_VERSION_MAC: '6.3.1'
+  QT_HASH_MAC_X86_64: 'a83f72a11023b03b6cb2dc365f0a66ad9df31163bbb4fe2df32d601856a9fad3'
+  QT_HASH_MAC_ARM64: '2f30af90c049670a5660656adbb440668aa1b0567f75a5f29e1def9108928403'
+  QT_HASH_MAC_UNIVERSAL: '252e6684f43ab9c6f262c73af739e2296ce391b998da2c4ee04c254aaa07db18'
+  QT_VERSION_WIN: '6.3.1'
+  DEPS_VERSION_MAC: '2022-08-02'
+  DEPS_HASH_MAC_X86_64: '7637e52305e6fc53014b5aabd583f1a4490b1d97450420e977cae9a336a29525'
+  DEPS_HASH_MAC_ARM64: '755e0fa69b17a3ae444e1befa9d91d77e3cafe628fbd1c6333686091826595cd'
+  DEPS_VERSION_WIN: '2022-09-12'
+  CMAKE_GENERATOR: 'Visual Studio 17 2022'
