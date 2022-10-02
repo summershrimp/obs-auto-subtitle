@@ -104,11 +104,11 @@ void AliNLS::onDisconnected() {
 }
 
 
-void AliNLS::onSendAudioMessage(const void *data, unsigned long size){
+void AliNLS::onSendAudioMessage(const char *data, unsigned long size){
     if(! running){
         return;
     }
-    ws.sendBinaryMessage(QByteArray::fromRawData((const char*)data, size));
+    ws.sendBinaryMessage(QByteArray::fromRawData(data, size));
 }
 
 

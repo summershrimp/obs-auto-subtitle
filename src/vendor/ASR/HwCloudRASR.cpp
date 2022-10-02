@@ -96,7 +96,7 @@ void HwCloudRASR::onDisconnected() {
 }
 
 
-void HwCloudRASR::onSendAudioMessage(const void *data, unsigned long size){
+void HwCloudRASR::onSendAudioMessage(const char *data, unsigned long size){
     if(! running){
         return;
     }

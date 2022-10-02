@@ -641,7 +641,7 @@ struct obs_audio_data * autosub_filter_audio(void *data, struct obs_audio_data *
     s->resampler_update_lock.unlock();
     if(ok) {
         s->lock_asr.lock();
-        emit s->asr->sendAudioMessage(output[0], out_samples * 2);
+        emit s->asr->sendAudioMessage((const char *)(output[0]), out_samples * 2);
         s->lock_asr.unlock();
     }
     return audio;
