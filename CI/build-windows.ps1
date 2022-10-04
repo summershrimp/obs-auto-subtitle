@@ -1,3 +1,8 @@
+param (
+    [string]$Component = "all",
+    [string]$OBSTag = "28.0.1"
+ )
+
 $ErrorActionPreference = "Stop"
 
 $_RunObsBuildScript = $true
@@ -79,11 +84,27 @@ function Build {
 }
 
 function Build-OBS-Autosub-Main {
-    #Checkout-OBS-Repo -Tag "28.0.1"
-    #Patch-OBS-QTDeps
-    #Build-OBS
+    $build_obs = $false
+    $build_plugin = $false
+    if ($Component -eq "all") {
+        $build_obs = $true
+        $build_plugin = $true
+    } elseif ($Component -eq "obs") {
+        $build_obs = $true
+    } elseif ($Component -eq "plugin") {
+        $build_plugin = $true
+    } else {
+        Write-Error "Invalid component: $Component"
+    }
 
-    Build
+    if($build_obs) {
+        Checkout-OBS-Repo -Tag $OBSTag
+        Patch-OBS-QTDeps
+        Build-OBS
+    }
+    if($build_plugin) {
+        Build
+    }
 }
 
 Build-OBS-Autosub-Main

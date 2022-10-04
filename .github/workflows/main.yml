@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - 'release/**'
+      - 'ci-test'
     tags: ['*']
   pull_request:
     paths-ignore: ['**.md']
@@ -22,4 +23,49 @@ env:
   DEPS_HASH_MAC_X86_64: '7637e52305e6fc53014b5aabd583f1a4490b1d97450420e977cae9a336a29525'
   DEPS_HASH_MAC_ARM64: '755e0fa69b17a3ae444e1befa9d91d77e3cafe628fbd1c6333686091826595cd'
   DEPS_VERSION_WIN: '2022-09-12'
-  CMAKE_GENERATOR: 'Visual Studio 17 2022'
+  OBS_STUDIO_VERSION: '28.0.1'
+
+jobs:
+  windows_build:
+    name: 'Windows Build'
+    runs-on: [windows-2022]
+    env:
+      CMAKE_GENERATOR: 'Visual Studio 17 2022'
+      CMAKE_SYSTEM_VERSION: '10.0.18363.657'
+    defaults:
+      run:
+        working-directory: 'obs-auto-subtitle'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          path: 'obs-auto-subtitle'
+          fetch-depth: 0
+
+      - name: 'Add msbuild to PATH'
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: 'Restore OBS dependency from cache'
+        id: obs-dep-cache
+        uses: actions/cache@v3
+        env:
+          CACHE_NAME: 'obs-dep-cache'
+        with:
+          path: ${{ github.workspace }}/obs-build-dependencies
+          key: ${{ runner.os }}-pr-${{ env.CACHE_NAME }}-${{ env.OBS_STUDIO_VERSION }}-${{ env.CACHE_REVISION }}
+          
+      - name: 'Restore OBS-Studio from cache'
+        id: obs-cache
+        uses: actions/cache@v3
+        env:
+          CACHE_NAME: 'obs-cache'
+        with:
+          path: ${{ github.workspace }}/obs-studio
+          key: ${{ runner.os }}-pr-${{ env.CACHE_NAME }}-${{ env.OBS_STUDIO_VERSION }}-${{ env.CACHE_REVISION }}
+
+      - name: 'Build OBS'
+        run: CI/build-windows.ps1 -Component "obs" -OBSTag "${{ env.OBS_STUDIO_VERSION }}"
+
+      - name: 'Build Plugin'
+        run: CI/build-windows.ps1 -Component "plugin"

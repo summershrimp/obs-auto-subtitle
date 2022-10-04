@@ -17,8 +17,9 @@ Function Checkout-OBS-Repo {
     }
     Write-Step "Fetching ${Tag}..."
 
-    git fetch origin $Tag
-    git reset --hard $Tag
+    git fetch --tags origin
+    git reset --hard tags/$Tag
+    git submodule update --init --recursive
 
     Ensure-Directory $CheckoutDir
 }
