@@ -7,3 +7,5 @@
 .idea
 .vs
 .vscode
+installer/obs-ssp.pkgproj
+installer/installer.iss

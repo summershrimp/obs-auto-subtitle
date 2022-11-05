@@ -98,6 +98,7 @@ if(WIN32)
 	install(FILES "${QT6_INSTALL_PREFIX}/plugins/tls/qschannelbackend.dll" DESTINATION "bin/${OBS_ARCH_NAME}/tls")
 	install(FILES "${QT6_INSTALL_PREFIX}/plugins/tls/qcertonlybackend.dll" DESTINATION "bin/${OBS_ARCH_NAME}/tls")
 	install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/ DESTINATION "data/obs-plugins/obs-auto-subtitle")
+	configure_file(installer/installer.iss.in ${CMAKE_SOURCE_DIR}/installer/installer.iss)
 endif()
 
 # OSX
@@ -105,6 +106,7 @@ if(APPLE)
 	set_target_properties(obs-auto-subtitle PROPERTIES PREFIX "")
 	target_link_libraries(obs-auto-subtitle
 		"${OBS_FRONTEND_LIB}")
+	configure_file(installer/obs-ssp.pkgproj.in ${CMAKE_SOURCE_DIR}/installer/obs-ssp.pkgproj)
 endif()
 
 # Linux

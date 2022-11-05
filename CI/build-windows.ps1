@@ -1,6 +1,7 @@
 param (
     [string]$Component = "all",
-    [string]$OBSTag = "28.0.1"
+    [string]$OBSTag = "28.0.1",
+    [Switch]$Package
  )
 
 $ErrorActionPreference = "Stop"
@@ -45,6 +46,7 @@ Function Configure {
         "-Dw32-pthreads_DIR=`"${ObsBuildDir}\${BuildDirectoryActual}\deps\w32-pthreads`"",
         "-DLibObs_DIR=`"${ObsBuildDir}\${BuildDirectoryActual}\libobs`"",
         "-Dobs-frontend-api_DIR=`"${ObsBuildDir}\${BuildDirectoryActual}\UI\obs-frontend-api`"",
+        "-DCMAKE_INSTALL_PREFIX=`"${CheckoutDir}/release`""
         "$(if (Test-Path Variable:$Quiet) { "-Wno-deprecated -Wno-dev --log-level=ERROR" })"
     )
         # "-DW32_PTHREADS_LIB=`"${ObsBuildDir}\${BuildDirectoryActual}\w32-pthreads\%build_config%\w32-pthreads.lib`"",
@@ -83,9 +85,15 @@ function Build {
     Invoke-External cmake --build "${BuildDirectoryActual}" --config ${BuildConfiguration}
 }
 
+function Package {
+    Write-Step "Install Plugin..."
+    Invoke-Expression "cmake --build `"${BuildDirectory}64`" --config ${BuildConfiguration} -t install"
+}
+
 function Build-OBS-Autosub-Main {
     $build_obs = $false
     $build_plugin = $false
+    $package_plugin = $false
     if ($Component -eq "all") {
         $build_obs = $true
         $build_plugin = $true
@@ -93,6 +101,9 @@ function Build-OBS-Autosub-Main {
         $build_obs = $true
     } elseif ($Component -eq "plugin") {
         $build_plugin = $true
+        if ($Package.IsPresent) {
+            $package_plugin = $true
+        }
     } else {
         Write-Error "Invalid component: $Component"
     }
@@ -104,6 +115,9 @@ function Build-OBS-Autosub-Main {
     }
     if($build_plugin) {
         Build
+        if($package_plugin) {
+            Package
+        }
     }
 }
 

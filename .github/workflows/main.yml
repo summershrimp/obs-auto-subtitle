@@ -68,4 +68,13 @@ jobs:
         run: CI/build-windows.ps1 -Component "obs" -OBSTag "${{ env.OBS_STUDIO_VERSION }}"
 
       - name: 'Build Plugin'
-        run: CI/build-windows.ps1 -Component "plugin"
+        run: CI/build-windows.ps1 -Component "plugin" -Package
+
+      - name: 'Package Plugin'
+        run: CI/package-windows.cmd
+
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'obs-auto-subtitle-windows'
+          path: '${{ github.workspace }}/obs-auto-subtitle/package'
