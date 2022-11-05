@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(obs-auto-subtitle VERSION 0.3.0)
+project(obs-auto-subtitle VERSION 0.4.0)
 
 add_compile_definitions(OBS_SSP_VERSION="${CMAKE_PROJECT_VERSION}")
 
