@@ -1,8 +1,3 @@
-copy %QTDIR64%\bin\Qt5Network.dll  release\bin\64bit\Qt5Network.dll
-copy %QTDIR64%\bin\Qt5WebSockets.dll  release\bin\64bit\Qt5WebSockets.dll
-copy %QtBaseDir%\Tools\OpenSSL\Win_x64\bin\libcrypto-1_1-x64.dll release\bin\64bit\libcrypto-1_1-x64.dll
-copy %QtBaseDir%\Tools\OpenSSL\Win_x64\bin\libssl-1_1-x64.dll release\bin\64bit\libssl-1_1-x64.dll
-
 mkdir package
 cd package
 

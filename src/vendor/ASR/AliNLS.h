@@ -48,7 +48,7 @@ private slots:
     void onConnected();
     void onDisconnected();
     void onTextMessageReceived(const QString message);
-    void onSendAudioMessage(const void *, unsigned long);
+    void onSendAudioMessage(const char *, unsigned long);
     void onResult(QString message, int type);
     void onError(QAbstractSocket::SocketError error);
 private:

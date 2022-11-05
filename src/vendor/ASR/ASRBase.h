@@ -60,7 +60,7 @@ protected:
     QMap<QString, QString> params;
 
 signals:
-    void sendAudioMessage(const void *, unsigned long);
+    void sendAudioMessage(const char *, unsigned long);
     void start();
     void stop();
 

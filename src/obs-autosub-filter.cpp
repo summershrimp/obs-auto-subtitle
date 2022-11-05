@@ -566,7 +566,7 @@ void autosub_filter_update(void* data, obs_data_t* settings)
         }
         int t = s->max_count;
         if(t != 0 && str.count() > t){
-            str = str.rightRef(t).toString();
+            str = str.right(t);
         }
         setText(str);
     });
@@ -641,7 +641,7 @@ struct obs_audio_data * autosub_filter_audio(void *data, struct obs_audio_data *
     s->resampler_update_lock.unlock();
     if(ok) {
         s->lock_asr.lock();
-        emit s->asr->sendAudioMessage(output[0], out_samples * 2);
+        emit s->asr->sendAudioMessage((const char *)(output[0]), out_samples * 2);
         s->lock_asr.unlock();
     }
     return audio;

@@ -1,0 +1,80 @@
+name: 'BUILD'
+
+on:
+  push:
+    paths-ignore: ['**.md']
+    branches:
+      - master
+      - 'release/**'
+      - 'ci-test'
+    tags: ['*']
+  pull_request:
+    paths-ignore: ['**.md']
+    branches: [master]
+
+env:
+  CACHE_REVISION: '006'
+  QT_VERSION_MAC: '6.3.1'
+  QT_HASH_MAC_X86_64: 'a83f72a11023b03b6cb2dc365f0a66ad9df31163bbb4fe2df32d601856a9fad3'
+  QT_HASH_MAC_ARM64: '2f30af90c049670a5660656adbb440668aa1b0567f75a5f29e1def9108928403'
+  QT_HASH_MAC_UNIVERSAL: '252e6684f43ab9c6f262c73af739e2296ce391b998da2c4ee04c254aaa07db18'
+  QT_VERSION_WIN: '6.3.1'
+  DEPS_VERSION_MAC: '2022-08-02'
+  DEPS_HASH_MAC_X86_64: '7637e52305e6fc53014b5aabd583f1a4490b1d97450420e977cae9a336a29525'
+  DEPS_HASH_MAC_ARM64: '755e0fa69b17a3ae444e1befa9d91d77e3cafe628fbd1c6333686091826595cd'
+  DEPS_VERSION_WIN: '2022-09-12'
+  OBS_STUDIO_VERSION: '28.0.1'
+
+jobs:
+  windows_build:
+    name: 'Windows Build'
+    runs-on: [windows-2022]
+    env:
+      CMAKE_GENERATOR: 'Visual Studio 17 2022'
+      CMAKE_SYSTEM_VERSION: '10.0.18363.657'
+    defaults:
+      run:
+        working-directory: 'obs-auto-subtitle'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          path: 'obs-auto-subtitle'
+          fetch-depth: 0
+
+      - name: 'Add msbuild to PATH'
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: 'Restore OBS dependency from cache'
+        id: obs-dep-cache
+        uses: actions/cache@v3
+        env:
+          CACHE_NAME: 'obs-dep-cache'
+        with:
+          path: ${{ github.workspace }}/obs-build-dependencies
+          key: ${{ runner.os }}-pr-${{ env.CACHE_NAME }}-${{ env.OBS_STUDIO_VERSION }}-${{ env.CACHE_REVISION }}
+          
+      - name: 'Restore OBS-Studio from cache'
+        id: obs-cache
+        uses: actions/cache@v3
+        env:
+          CACHE_NAME: 'obs-cache'
+        with:
+          path: ${{ github.workspace }}/obs-studio
+          key: ${{ runner.os }}-pr-${{ env.CACHE_NAME }}-${{ env.OBS_STUDIO_VERSION }}-${{ env.CACHE_REVISION }}
+
+      - name: 'Build OBS'
+        run: CI/build-windows.ps1 -Component "obs" -OBSTag "${{ env.OBS_STUDIO_VERSION }}"
+
+      - name: 'Build Plugin'
+        run: CI/build-windows.ps1 -Component "plugin" -Package
+
+      - name: 'Package Plugin'
+        run: CI/package-windows.cmd
+
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'obs-auto-subtitle-windows'
+          path: '${{ github.workspace }}/obs-auto-subtitle/package'

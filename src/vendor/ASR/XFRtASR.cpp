@@ -74,7 +74,7 @@ void XFRtASR::onDisconnected() {
 }
 
 
-void XFRtASR::onSendAudioMessage(const void *data, unsigned long size){
+void XFRtASR::onSendAudioMessage(const char *data, unsigned long size){
     if(! running){
         return;
     }
