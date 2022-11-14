@@ -1,34 +1,26 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16...3.21)
+
+# Change obs-plugintemplate to your plugin's name in a machine-readable format (e.g.:
+# obs-myawesomeplugin) and set
 project(obs-auto-subtitle VERSION 0.4.0)
+add_library(${CMAKE_PROJECT_NAME} MODULE)
 
-add_compile_definitions(OBS_SSP_VERSION="${CMAKE_PROJECT_VERSION}")
+# Replace `Your Name Here` with the name (yours or your organization's) you want to see as the
+# author of the plugin (in the plugin's metadata itself and in the installers)
+set(PLUGIN_AUTHOR "Yibai Zhang")
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
+# Replace `com.example.obs-plugin-template` with a unique Bundle ID for macOS releases (used both in
+# the installer and when submitting the installer for notarization)
+set(MACOS_BUNDLEID "com.summershrimp.${CMAKE_PROJECT_NAME}")
 
-add_definitions(-DASIO_STANDALONE)
+# Replace `me@contoso.com` with the maintainer email address you want to put in Linux packages
+set(LINUX_MAINTAINER_EMAIL "xm1994@gmail.com")
 
-# if (WIN32 OR APPLE)
-# 	include(external/FindLibObs.cmake)
-# endif()
-
-
-find_package(LibObs REQUIRED)
-find_package(obs-frontend-api REQUIRED)
-find_package(Qt6 COMPONENTS Core Widgets Network WebSockets)
-find_package(Qt6 COMPONENTS Core Widgets Network WebSockets)
-
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-	set(ARCH 64)
-else()
-	set(ARCH 32)
-endif()
-
+# Add your custom source files here - header files are optional and only required for visibility
+# e.g. in Xcode or Visual Studio
 set(obs-auto-subtitle_SOURCES
 		src/obs-auto-subtitle.cpp
-        src/obs-autosub-filter.cpp
+    src/obs-autosub-filter.cpp
 		src/builder/XFTransBuilder.cpp
 		src/builder/GSTransBuilder.cpp
 		src/vendor/ASR/ASRBase.cpp
@@ -54,80 +46,75 @@ set(obs-auto-subtitle_HEADERS
 		src/vendor/Trans/XFTrans.h
 		src/vendor/Trans/GScriptTrans.h)
 
-add_library(obs-auto-subtitle MODULE
-	${obs-auto-subtitle_SOURCES}
-	${obs-auto-subtitle_HEADERS})
-# include_directories(
-# 		"${LIBOBS_INCLUDE_DIR}/../UI/obs-frontend-api"
-# 		${Qt5Core_INCLUDES}
-# 		${Qt5Widgets_INCLUDES}
-# 		${Qt5Network_INCLUDES}
-# 		${Qt5WebSockets_INCLUDES})
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${obs-auto-subtitle_SOURCES})
 
-target_link_libraries(obs-auto-subtitle
-		OBS::libobs
-		OBS::obs-frontend-api
-		OBS::w32-pthreads
-		Qt6::Core
-		Qt6::Widgets
-		Qt6::Network
-		Qt6::WebSockets)
+# Import libobs as main plugin dependency
+find_package(libobs REQUIRED)
+include(cmake/ObsPluginHelpers.cmake)
 
-# Windows
-if(WIN32)
-	string(REGEX REPLACE "/RTC(su|[1su])" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-	message("CXX release flags: ${CMAKE_CXX_FLAGS_RELEASE}")
-	
-	add_definitions(-D_WEBSOCKETPP_CPP11_STL_)
+# Uncomment these lines if you want to use the OBS Frontend API in your plugin
+#[[
+find_package(obs-frontend-api REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
+#]]
 
-	find_package(w32-pthreads REQUIRED)
-	target_link_libraries(obs-auto-subtitle OBS::w32-pthreads)
+# Uncomment those lines if you want to use Qt in your plugin
 
-	if(ARCH EQUAL 64)
-		set(OBS_ARCH_NAME "64bit")
-		set(OBS_BUILDDIR_ARCH "build64")
-	else()
-		set(OBS_ARCH_NAME "32bit")
-		set(OBS_BUILDDIR_ARCH "build32")
-		add_definitions(/arch:SSE2)
-	endif()
+find_qt(COMPONENTS Widgets Core Network WebSockets)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt::Core Qt::Widgets Qt::Network Qt::WebSockets)
+set_target_properties(
+  ${CMAKE_PROJECT_NAME}
+  PROPERTIES AUTOMOC ON
+             AUTOUIC ON
+             AUTORCC ON)
 
-	install(TARGETS obs-auto-subtitle LIBRARY DESTINATION "obs-plugins/${OBS_ARCH_NAME}")
-	get_target_property(qwebsocket Qt6::WebSockets LOCATION_Release)
-	install(FILES ${qwebsocket} DESTINATION "bin/${OBS_ARCH_NAME}")
-	install(FILES "${QT6_INSTALL_PREFIX}/plugins/tls/qschannelbackend.dll" DESTINATION "bin/${OBS_ARCH_NAME}/tls")
-	install(FILES "${QT6_INSTALL_PREFIX}/plugins/tls/qcertonlybackend.dll" DESTINATION "bin/${OBS_ARCH_NAME}/tls")
-	install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/ DESTINATION "data/obs-plugins/obs-auto-subtitle")
-	configure_file(installer/installer.iss.in ${CMAKE_SOURCE_DIR}/installer/installer.iss)
+
+configure_file(src/plugin-macros.h.in ${CMAKE_SOURCE_DIR}/src/plugin-macros.generated.h)
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-macros.generated.h)
+
+# /!\ TAKE NOTE: No need to edit things past this point /!\
+
+# --- Platform-independent build settings ---
+
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
+
+# --- End of section ---
+
+# --- Windows-specific build settings and tasks ---
+if(OS_WINDOWS)
+  configure_file(cmake/bundle/windows/installer-Windows.iss.in
+                 ${CMAKE_BINARY_DIR}/installer-Windows.generated.iss)
+
+  configure_file(cmake/bundle/windows/resource.rc.in ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.rc)
+  target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.rc)
+
+  if(MSVC)
+  	find_package(w32-pthreads REQUIRED)
+	target_link_libraries(obs-auto-subtitle PRIVATE OBS::w32-pthreads)
+
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4)
+  endif()
+  # --- End of section ---
+
+  # -- macOS specific build settings and tasks --
+elseif(OS_MACOS)
+  configure_file(cmake/bundle/macos/installer-macos.pkgproj.in
+                 ${CMAKE_BINARY_DIR}/installer-macos.generated.pkgproj)
+
+  set(MACOSX_PLUGIN_GUI_IDENTIFIER "${MACOS_BUNDLEID}")
+  set(MACOSX_PLUGIN_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}")
+  set(MACOSX_PLUGIN_SHORT_VERSION_STRING "1")
+
+  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall)
+  # --- End of section ---
+
+  # --- Linux-specific build settings and tasks ---
+else()
+  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall)
 endif()
+# --- End of section ---
 
-# OSX
-if(APPLE)
-	set_target_properties(obs-auto-subtitle PROPERTIES PREFIX "")
-	target_link_libraries(obs-auto-subtitle
-		"${OBS_FRONTEND_LIB}")
-	configure_file(installer/obs-ssp.pkgproj.in ${CMAKE_SOURCE_DIR}/installer/obs-ssp.pkgproj)
-endif()
-
-# Linux
-if(UNIX AND NOT APPLE)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -mtune=core2 -Ofast")
-
-	if(ARCH EQUAL 64)
-		set(ARCH_NAME "x86_64")
-	else()
-		set(ARCH_NAME "i686")
-	endif()
-
-	file(GLOB locale_files data/locale/*.ini)
-        execute_process(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE UNAME_MACHINE)
-
-	install(TARGETS obs-auto-subtitle
-                LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/obs-plugins)
-	# Dirty fix for Ubuntu
-	install(TARGETS obs-auto-subtitle
-		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${UNAME_MACHINE}-linux-gnu/obs-plugins)
-
-	install(FILES ${locale_files}
-		DESTINATION "${CMAKE_INSTALL_PREFIX}/share/obs/obs-plugins/obs-auto-subtitle/locale")
-endif()
+setup_plugin_target(${CMAKE_PROJECT_NAME})

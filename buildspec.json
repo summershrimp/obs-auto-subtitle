@@ -1,0 +1,86 @@
+{
+    "dependencies": {
+        "obs-studio": {
+            "version": "28.0.2",
+            "repository": "https://github.com/obsproject/obs-studio.git",
+            "branch": "28.0.2",
+            "hash": "087ee39e2d8b9240b2ada1492fc7ad85102084ab"
+        },
+        "prebuilt": {
+            "version": "2022-09-12",
+            "baseUrl": "https://github.com/summershrimp/obs-deps/releases/download",
+            "label": "Pre-built obs-deps",
+            "hashes": {
+                "macos-x86_64": "8e950a45530bf80622174a6313bb5301ade86d697c2f618c7d069ffb1a258067",
+                "macos-arm64": "7e220e01ce87d23e6e095e18b0c9faf6de976f1ae47647dd1d9ccaca276ac008",
+                "macos-universal": "9f9b85dba1ed40d23325403f0834530dbcd8ce4a229a54580a77e785c66d1c1b",
+                "windows-x64": "3b52dc723934b1e753e9fbea2dd11ab798062b13b6c7372d8e1d02396745dbcb",
+                "windows-x86": "7ab4bb6f3cdb2de3f59db6bd7a01737133ef53af4b7472be92960be68aeb5ab7"
+            }
+        },
+        "qt5": {
+            "version": "2022-09-12",
+            "baseUrl": "https://github.com/summershrimp/obs-deps/releases/download",
+            "label": "Pre-built Qt5",
+            "hashes": {
+                "macos-x86_64": "af63f225f832103d99b9e7f8c8e6f94d22d72b2c4276cf27047baf1b926d67f0",
+                "macos-arm64": "a2598414c30c96796e8bfd9dc858c82b57860e97eb16b6bcb7b6fc2e6a567965",
+                "macos-universal": "9f9b85dba1ed40d23325403f0834530dbcd8ce4a229a54580a77e785c66d1c1b",
+                "windows-x64": "dc5e407dc6cedd0582639cf33201a0a36996d917bd92603936299f6aa7ecbf86",
+                "windows-x86": "6ddae249d9f742717626c09af74b81429ba24c1394ff9bfcd53ce2be5b7d0b40"
+            },
+            "pdb-hashes": {
+                "windows-x64": "783631edd951947b98255065d699e2aeb7122ea79cade78868a92627baefe539",
+                "windows-x86": "3355f1987db9998eac4cdf02f15d69ab9bb66ad99b889b2c539a4e5ac710d820"
+            }
+        },
+        "qt6": {
+            "version": "2022-09-12",
+            "baseUrl": "https://github.com/summershrimp/obs-deps/releases/download",
+            "label": "Pre-built Qt6",
+            "hashes": {
+                "macos-x86_64": "cd423bd7461ced6f97192d175ea10e49b25e8f3e98485019cc146abf328c4ea8",
+                "macos-arm64": "ba70f78ae47276a75877b0525251820c0da8ef1f4b5c2a587ee626dcf9e59f00",
+                "macos-universal": "303750871a2e3f159e463f69b07ece7f2208ecb6b271905853e37b4be6f2d2ac",
+                "windows-x64": "79ce971da8eccb840e142df1bc1fa9e466defb242e490d1fb7d4740e553e8315",
+                "windows-x86": "8c8d7094241e12c2e97aaef8fbbe4e9f56d33e97c3dd73830ad45b5b3a83c8c0"
+            },
+            "pdb-hashes": {
+                "windows-x64": "4cd254f0f5b158719b9892af5456ef5d2f47914afee63e8d8a4817548503c2d5",
+                "windows-x86": "e6d6026c6ef59d55d4f54affbc9090eca9344b7c66767a90d57f19d252afab8d"
+            }
+        }
+    },
+    "platformConfig": {
+        "macos-x86_64": {
+            "qtVersion": 6,
+            "deploymentTarget": "10.15"
+        },
+        "macos-arm64": {
+            "qtVersion": 6,
+            "deploymentTarget": "11.0"
+        },
+        "macos-universal": {
+            "qtVersion": 6,
+            "deploymentTarget": "10.15"
+        },
+        "windows-x64": {
+            "qtVersion": 6,
+            "visualStudio": "Visual Studio 17 2022",
+            "platformSDK": "10.0.20348.0"
+        },
+        "windows-x86": {
+            "qtVersion": 6,
+            "visualStudio": "Visual Studio 17 2022",
+            "platformSDK": "10.0.20348.0"
+        },
+        "linux-x86_64": {
+            "qtVersion": 6
+        },
+        "linux-aarch64": {
+            "qtVersion": 6
+        }
+    },
+    "name": "obs-auto-subtitle",
+    "version": "0.4.0"
+}
