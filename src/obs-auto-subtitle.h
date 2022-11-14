@@ -19,12 +19,6 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #ifndef OBS_AUTOSUB_H
 #define OBS_AUTOSUB_H
 
-#include <string>
-
-#ifndef OBS_AUTOSUB_VERSION
-#define OBS_AUTOSUB_VERSION "unknown"
-#endif
-
-#define blog(level, msg, ...) blog(level, "[obs-autosub] " msg, ##__VA_ARGS__)
+#include "plugin-macros.generated.h"
 
 #endif // OBS_AUTOSUB_H

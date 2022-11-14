@@ -1,11 +1,13 @@
+*~
+.DS_Store
 /build/
-/build32/
-/build64/
+/build_*/
 /release/
 /installer/Output/
-.DS_Store
-.idea
-.vs
+
 .vscode
-installer/obs-ssp.pkgproj
-installer/installer.iss
+.idea
+
+# ignore generated files
+*.generated.*
+**/.Brewfile.lock.json
