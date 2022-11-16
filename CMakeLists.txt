@@ -19,32 +19,32 @@ set(LINUX_MAINTAINER_EMAIL "xm1994@gmail.com")
 # Add your custom source files here - header files are optional and only required for visibility
 # e.g. in Xcode or Visual Studio
 set(obs-auto-subtitle_SOURCES
-		src/obs-auto-subtitle.cpp
+    src/obs-auto-subtitle.cpp
     src/obs-autosub-filter.cpp
-		src/builder/XFTransBuilder.cpp
-		src/builder/GSTransBuilder.cpp
-		src/vendor/ASR/ASRBase.cpp
-		src/vendor/ASR/XFRtASR.cpp
-		src/vendor/ASR/HwCloudRASR.cpp
-		src/vendor/ASR/AliNLS.cpp
-		src/vendor/Trans/TransBase.cpp
-		src/vendor/Trans/XFTrans.cpp
-		src/vendor/Trans/GScriptTrans.cpp)
+    src/builder/XFTransBuilder.cpp
+    src/builder/GSTransBuilder.cpp
+    src/vendor/ASR/ASRBase.cpp
+    src/vendor/ASR/XFRtASR.cpp
+    src/vendor/ASR/HwCloudRASR.cpp
+    src/vendor/ASR/AliNLS.cpp
+    src/vendor/Trans/TransBase.cpp
+    src/vendor/Trans/XFTrans.cpp
+    src/vendor/Trans/GScriptTrans.cpp)
 
 set(obs-auto-subtitle_HEADERS
-		src/obs-auto-subtitle.h
-		src/obs-autosub-filter.h
-		src/builder/PropBuilderBase.h
-		src/builder/TransBuilderBase.h
-		src/builder/XFTransBuilder.h
-		src/builder/GSTransBuilder.h
-		src/vendor/ASR/ASRBase.h
-		src/vendor/ASR/XFRtASR.h
-		src/vendor/ASR/HwCloudRASR.h
-		src/vendor/ASR/AliNLS.h
-		src/vendor/Trans/TransBase.h
-		src/vendor/Trans/XFTrans.h
-		src/vendor/Trans/GScriptTrans.h)
+    src/obs-auto-subtitle.h
+    src/obs-autosub-filter.h
+    src/builder/PropBuilderBase.h
+    src/builder/TransBuilderBase.h
+    src/builder/XFTransBuilder.h
+    src/builder/GSTransBuilder.h
+    src/vendor/ASR/ASRBase.h
+    src/vendor/ASR/XFRtASR.h
+    src/vendor/ASR/HwCloudRASR.h
+    src/vendor/ASR/AliNLS.h
+    src/vendor/Trans/TransBase.h
+    src/vendor/Trans/XFTrans.h
+    src/vendor/Trans/GScriptTrans.h)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${obs-auto-subtitle_SOURCES})
 
@@ -92,11 +92,18 @@ if(OS_WINDOWS)
   target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.rc)
 
   if(MSVC)
-  	find_package(w32-pthreads REQUIRED)
-	target_link_libraries(obs-auto-subtitle PRIVATE OBS::w32-pthreads)
+    find_package(w32-pthreads REQUIRED)
+  target_link_libraries(obs-auto-subtitle PRIVATE OBS::w32-pthreads)
 
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4)
   endif()
+
+  install(FILES ${QT6_INSTALL_PREFIX}/bin/Qt6WebSockets.dll
+            DESTINATION ${OBS_LIBRARY_DESTINATION})
+
+  install(FILES ${QT6_INSTALL_PREFIX}/plugins/tls/qcertonlybackend.dll
+                ${QT6_INSTALL_PREFIX}/plugins/tls/qschannelbackend.dll
+            DESTINATION ${OBS_LIBRARY_DESTINATION}/tls)
   # --- End of section ---
 
   # -- macOS specific build settings and tasks --
