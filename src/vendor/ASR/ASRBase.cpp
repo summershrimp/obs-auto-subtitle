@@ -18,44 +18,54 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #include "ASRBase.h"
 
-ASRBase::ASRBase(QObject *parent) : QObject(parent){
-    qRegisterMetaType<ResultCallback>("ResultCallback");
-    connect(this, &ASRBase::start, this, &ASRBase::onStart);
-    connect(this, &ASRBase::stop, this, &ASRBase::onStop);
+ASRBase::ASRBase(QObject *parent) : QObject(parent)
+{
+	qRegisterMetaType<ResultCallback>("ResultCallback");
+	connect(this, &ASRBase::start, this, &ASRBase::onStart);
+	connect(this, &ASRBase::stop, this, &ASRBase::onStop);
 }
 
-void ASRBase::setParam(QString key, QString value) {
-    params[key] = value;
+void ASRBase::setParam(QString key, QString value)
+{
+	params[key] = value;
 }
 
-void ASRBase::setResultCallback(ASRBase::ResultCallback cb) {
-    this->resultCallback = std::move(cb);
+void ASRBase::setResultCallback(ASRBase::ResultCallback cb)
+{
+	this->resultCallback = std::move(cb);
 }
 
-void ASRBase::setConnectedCallback(ASRBase::ConnectedCallback cb) {
-    this->connectedCallback = std::move(cb);
+void ASRBase::setConnectedCallback(ASRBase::ConnectedCallback cb)
+{
+	this->connectedCallback = std::move(cb);
 }
 
-void ASRBase::setDisconnectedCallback(ASRBase::DisconnectedCallback cb) {
-    this->disconnectedCallback = std::move(cb);
+void ASRBase::setDisconnectedCallback(ASRBase::DisconnectedCallback cb)
+{
+	this->disconnectedCallback = std::move(cb);
 }
 
-void ASRBase::setErrorCallback(ErrorCallback cb) {
-    this->errorCallback = std::move(cb);
+void ASRBase::setErrorCallback(ErrorCallback cb)
+{
+	this->errorCallback = std::move(cb);
 }
 
-ASRBase::ResultCallback ASRBase::getResultCallback() {
-    return resultCallback;
+ASRBase::ResultCallback ASRBase::getResultCallback()
+{
+	return resultCallback;
 }
 
-ASRBase::ConnectedCallback ASRBase::getConnectedCallback() {
-    return connectedCallback;
+ASRBase::ConnectedCallback ASRBase::getConnectedCallback()
+{
+	return connectedCallback;
 }
 
-ASRBase::DisconnectedCallback ASRBase::getDisconnectedCallback() {
-    return disconnectedCallback;
+ASRBase::DisconnectedCallback ASRBase::getDisconnectedCallback()
+{
+	return disconnectedCallback;
 }
 
-ASRBase::ErrorCallback ASRBase::getErrorCallback() {
-    return errorCallback;
+ASRBase::ErrorCallback ASRBase::getErrorCallback()
+{
+	return errorCallback;
 }

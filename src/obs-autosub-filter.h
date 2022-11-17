@@ -28,7 +28,6 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #define T_FILTER_NAME obs_module_text("AutoSub.FilterName")
 
-
 #define PROP_MAX_COUNT "autosub_filter_max_count"
 #define T_MAX_CHAR_COUNT obs_module_text("AutoSub.MaxCharCount")
 
@@ -86,14 +85,13 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #define PROP_TRANS_TARGET_TEXT_SOURCE "autosub_filter_trans_target_source"
 
-
 using namespace std::placeholders;
 enum ServiceProvider {
-    SP_Default = 0,
-    SP_Xfyun,
-    SP_Hwcloud,
-    SP_Sogou,
-    SP_Aliyun
+	SP_Default = 0,
+	SP_Xfyun,
+	SP_Hwcloud,
+	SP_Sogou,
+	SP_Aliyun
 };
 #define T_SP_XFYUN obs_module_text("AutoSub.SP.Xfyun")
 #define T_SP_HWCLOUD obs_module_text("AutoSub.SP.Hwcloud")
@@ -101,74 +99,71 @@ enum ServiceProvider {
 #define T_SP_ALIYUN obs_module_text("AutoSub.SP.Aliyun")
 
 enum TransServiceProvider {
-    Trans_SP_Default = 0,
-    Trans_SP_Xfyun,
-    Trans_SP_XfNiu,
-    Trans_SP_GScript,
+	Trans_SP_Default = 0,
+	Trans_SP_Xfyun,
+	Trans_SP_XfNiu,
+	Trans_SP_GScript,
 };
 
 #define T_TRANS_SP_XFYUN obs_module_text("AutoSub.Trans.SP.Xfyun")
 #define T_TRANS_SP_XFNIU obs_module_text("AutoSub.Trans.SP.XfyunNiu")
 #define T_TRANS_SP_GSCRIPT obs_module_text("AutoSub.Trans.SP.GoogleScript")
 
+struct autosub_filter {
+	obs_source_t *source = nullptr;
+	uint32_t sample_rate = 48000;
+	uint32_t channels = 2;
+	int max_count = 0;
+	int clear_timeout = 0;
+	bool running = false;
 
-struct autosub_filter
-{
-    obs_source_t* source = nullptr;
-    uint32_t sample_rate = 48000;
-    uint32_t channels = 2;
-    int max_count = 0;
-    int clear_timeout = 0;
-    bool running = false;
+	int provider = SP_Default;
+	struct {
+		QString appId;
+		QString apiKey;
+		bool punc;
+		QString pd;
+	} xfyun;
 
-    int provider = SP_Default;
-    struct {
-        QString appId;
-        QString apiKey;
-        bool punc;
-        QString pd;
-    } xfyun;
+	struct {
+		QString project_id;
+		QString token;
+	} hwcloud;
 
-    struct {
-        QString project_id;
-        QString token;
-    } hwcloud;
+	struct {
+		QString appKey;
+		QString token;
+		bool punc;
+		bool itn;
+		bool int_result;
+	} alinls;
 
-    struct {
-        QString appKey;
-        QString token;
-        bool punc;
-        bool itn;
-        bool int_result;
-    } alinls;
+	int refresh = false;
 
-    int refresh = false;
+	ASRBase *asr = nullptr;
+	std::mutex lock_asr;
+	audio_resampler_t *resampler = nullptr;
+	std::mutex resampler_update_lock;
 
-    ASRBase *asr = nullptr;
-    std::mutex lock_asr;
-    audio_resampler_t *resampler = nullptr;
-    std::mutex resampler_update_lock;
+	const char *text_source_name = nullptr;
+	std::mutex text_source_update_lock;
+	obs_weak_source_t *text_source = nullptr;
+	uint64_t text_source_last_update = 0;
+	uint64_t last_update_time = os_gettime_ns();
 
-    const char *text_source_name = nullptr;
-    std::mutex text_source_update_lock;
-    obs_weak_source_t *text_source = nullptr;
-    uint64_t text_source_last_update = 0;
-    uint64_t last_update_time = os_gettime_ns();
+	bool enable_trans;
+	int trans_provider;
 
-    bool enable_trans;
-    int trans_provider;
+	XFTransBuilder xfTransBuilder;
+	GSTransBuilder gsTransBuilder;
 
-    XFTransBuilder xfTransBuilder;
-    GSTransBuilder gsTransBuilder;
+	std::shared_ptr<TransBase> translator = nullptr;
+	std::mutex lock_trans;
 
-    std::shared_ptr<TransBase> translator = nullptr;
-    std::mutex lock_trans;
-
-    const char *trans_source_name = nullptr;
-    std::mutex trans_source_update_lock;
-    obs_weak_source_t *trans_source = nullptr;
-    uint64_t trans_source_last_update = 0;
+	const char *trans_source_name = nullptr;
+	std::mutex trans_source_update_lock;
+	obs_weak_source_t *trans_source = nullptr;
+	uint64_t trans_source_last_update = 0;
 };
-
 
 #endif

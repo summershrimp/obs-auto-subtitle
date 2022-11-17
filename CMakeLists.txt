@@ -68,7 +68,6 @@ set_target_properties(
              AUTOUIC ON
              AUTORCC ON)
 
-
 configure_file(src/plugin-macros.h.in ${CMAKE_SOURCE_DIR}/src/plugin-macros.generated.h)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-macros.generated.h)
@@ -93,17 +92,16 @@ if(OS_WINDOWS)
 
   if(MSVC)
     find_package(w32-pthreads REQUIRED)
-  target_link_libraries(obs-auto-subtitle PRIVATE OBS::w32-pthreads)
+    target_link_libraries(obs-auto-subtitle PRIVATE OBS::w32-pthreads)
 
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4)
   endif()
 
-  install(FILES ${QT6_INSTALL_PREFIX}/bin/Qt6WebSockets.dll
-            DESTINATION ${OBS_LIBRARY_DESTINATION})
+  install(FILES ${QT6_INSTALL_PREFIX}/bin/Qt6WebSockets.dll DESTINATION ${OBS_LIBRARY_DESTINATION})
 
   install(FILES ${QT6_INSTALL_PREFIX}/plugins/tls/qcertonlybackend.dll
                 ${QT6_INSTALL_PREFIX}/plugins/tls/qschannelbackend.dll
-            DESTINATION ${OBS_LIBRARY_DESTINATION}/tls)
+          DESTINATION ${OBS_LIBRARY_DESTINATION}/tls)
   # --- End of section ---
 
   # -- macOS specific build settings and tasks --
@@ -127,19 +125,21 @@ endif()
 
 setup_plugin_target(${CMAKE_PROJECT_NAME})
 if(OS_MACOS)
-  install(DIRECTORY "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_LIBS}/QtWebSockets.framework"
-          DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks"
-          COMPONENT obs_plugins
-          PATTERN "Headers" EXCLUDE)
+  install(
+    DIRECTORY "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_LIBS}/QtWebSockets.framework"
+    DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks"
+    COMPONENT obs_plugins
+    PATTERN "Headers" EXCLUDE)
   if(${QT_VERSION} EQUAL 5)
     set(_QT_FW_VERSION "${QT_VERSION}")
   else()
     set(_QT_FW_VERSION "A")
   endif()
   set(_COMMAND
-        "${CMAKE_INSTALL_NAME_TOOL} \\
+      "${CMAKE_INSTALL_NAME_TOOL} \\
         -change @rpath/QtWebSockets.framework/Versions/${_QT_FW_VERSION}/QtWebSockets @loader_path/../Frameworks/QtWebSockets.framework/Versions/${_QT_FW_VERSION}/QtWebSockets \\
-        \\\"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.plugin/Contents/MacOS/${CMAKE_PROJECT_NAME}\\\"")
+        \\\"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.plugin/Contents/MacOS/${CMAKE_PROJECT_NAME}\\\""
+  )
   install(CODE "execute_process(COMMAND /bin/sh -c \"${_COMMAND}\")" COMPONENT obs_plugins)
 
 endif()

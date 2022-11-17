@@ -36,8 +36,8 @@ bool obs_module_load(void)
 	(void)os_dlopen("./libssl-1_1-x64.dll");
 #endif
 
-    autosub_filter_info = create_autosub_filter_info();
-    obs_register_source(&autosub_filter_info);
+	autosub_filter_info = create_autosub_filter_info();
+	obs_register_source(&autosub_filter_info);
 
 	return true;
 }
@@ -47,12 +47,12 @@ void obs_module_unload()
 	blog(LOG_INFO, "goodbye !");
 }
 
-const char* obs_module_name()
+const char *obs_module_name()
 {
 	return "obs-auto-subtitle";
 }
 
-const char* obs_module_description()
+const char *obs_module_description()
 {
 	return "Online STT to Subtitle plugin for OBS Studio";
 }

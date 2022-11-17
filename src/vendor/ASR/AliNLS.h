@@ -30,37 +30,38 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define ALINLS_TOKEN_HEADER "X-NLS-Token"
 
 class AliNLS : public ASRBase {
-    Q_OBJECT
+	Q_OBJECT
 public:
-    AliNLS(const QString &appKey, const QString &token, QObject *parent = nullptr);
-    QString getAppKey();
-    QString getToken();
+	AliNLS(const QString &appKey, const QString &token,
+	       QObject *parent = nullptr);
+	QString getAppKey();
+	QString getToken();
 
-    ~AliNLS();
+	~AliNLS();
 
 signals:
-    void textMessageReceived(const QString message);
-    void haveResult(QString message, int type);
+	void textMessageReceived(const QString message);
+	void haveResult(QString message, int type);
 
 private slots:
-    void onStart();
-    void onStop();
-    void onConnected();
-    void onDisconnected();
-    void onTextMessageReceived(const QString message);
-    void onSendAudioMessage(const char *, unsigned long);
-    void onResult(QString message, int type);
-    void onError(QAbstractSocket::SocketError error);
-private:
-    QString appKey;
-    QString token;
-    QWebSocket ws;
-    bool running;
-    QHash<QString, QString> _header;
-    QHash<QString, QJsonValue> _payload;
-    QString serializeReq();
-    QString task_id;
-};
+	void onStart();
+	void onStop();
+	void onConnected();
+	void onDisconnected();
+	void onTextMessageReceived(const QString message);
+	void onSendAudioMessage(const char *, unsigned long);
+	void onResult(QString message, int type);
+	void onError(QAbstractSocket::SocketError error);
 
+private:
+	QString appKey;
+	QString token;
+	QWebSocket ws;
+	bool running;
+	QHash<QString, QString> _header;
+	QHash<QString, QJsonValue> _payload;
+	QString serializeReq();
+	QString task_id;
+};
 
 #endif //OBS_AUTO_SUBTITLE_ALINLS_H

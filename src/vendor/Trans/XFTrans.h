@@ -27,22 +27,25 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 class XFTrans : public TransBase {
 public:
-    XFTrans(QString appid, QString apiKey, QString apiSecret, QObject *parent = nullptr);
-    XFTrans(QString appId, QString apiKey, QString apiSecret, QString endpoint, QObject *parent = nullptr);
-    ~XFTrans();
+	XFTrans(QString appid, QString apiKey, QString apiSecret,
+		QObject *parent = nullptr);
+	XFTrans(QString appId, QString apiKey, QString apiSecret,
+		QString endpoint, QObject *parent = nullptr);
+	~XFTrans();
 public slots:
-    void onResult(QNetworkReply *rep);
-    void onRequestTranslate(QString, QString, QString);
+	void onResult(QNetworkReply *rep);
+	void onRequestTranslate(QString, QString, QString);
 
 private:
-    QString signBody(QByteArray body);
-    QString genSignature(QString host, QString date, QString httpMethod, QString requestUri, QString digest);
-    QNetworkRequest assembleRequest(QString url, QByteArray body);
-    QString appId;
-    QString apiKey;
-    QString apiSecret;
-    QNetworkAccessManager manager;
-    QString endpoint;
+	QString signBody(QByteArray body);
+	QString genSignature(QString host, QString date, QString httpMethod,
+			     QString requestUri, QString digest);
+	QNetworkRequest assembleRequest(QString url, QByteArray body);
+	QString appId;
+	QString apiKey;
+	QString apiSecret;
+	QNetworkAccessManager manager;
+	QString endpoint;
 };
 
 #endif // OBS_AUTO_SUBTITLE_XFTRANS_H

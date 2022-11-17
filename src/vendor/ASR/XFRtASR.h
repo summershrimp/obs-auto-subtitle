@@ -29,35 +29,35 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define XFYUN_RTASR_GOODBYE "{\"end\": true}"
 
 class XFRtASR : public ASRBase {
-    Q_OBJECT
+	Q_OBJECT
 public:
-    XFRtASR(const QString &appId, const QString &apiKey, QObject *parent = nullptr);
-    QString getAppId();
-    QString getApiKey();
+	XFRtASR(const QString &appId, const QString &apiKey,
+		QObject *parent = nullptr);
+	QString getAppId();
+	QString getApiKey();
 
-    ~XFRtASR();
+	~XFRtASR();
 
 signals:
-    void textMessageReceived(const QString message);
-    void haveResult(QString message, int type);
+	void textMessageReceived(const QString message);
+	void haveResult(QString message, int type);
 
 private slots:
-    void onStart();
-    void onStop();
-    void onConnected();
-    void onDisconnected();
-    void onTextMessageReceived(const QString message);
-    void onSendAudioMessage(const char *, unsigned long);
-    void onResult(QString message, int type);
-    void onError(QAbstractSocket::SocketError error);
+	void onStart();
+	void onStop();
+	void onConnected();
+	void onDisconnected();
+	void onTextMessageReceived(const QString message);
+	void onSendAudioMessage(const char *, unsigned long);
+	void onResult(QString message, int type);
+	void onError(QAbstractSocket::SocketError error);
 
 private:
-    QString appId;
-    QString apiKey;
-    QWebSocket ws;
-    bool running;
-    QUrl buildQuery();
-
+	QString appId;
+	QString apiKey;
+	QWebSocket ws;
+	bool running;
+	QUrl buildQuery();
 };
 
 #endif //OBS_AUTO_SUBTITLE_XFRTASR_H
