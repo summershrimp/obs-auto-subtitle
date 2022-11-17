@@ -18,7 +18,7 @@ on:
       - main
 
 env:
-  PLUGIN_NAME: 'obs-plugintemplate'
+  PLUGIN_NAME: 'obs-auto-subtitle'
 
 jobs:
   clang_check:
