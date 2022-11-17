@@ -116,6 +116,7 @@ elseif(OS_MACOS)
   set(MACOSX_PLUGIN_SHORT_VERSION_STRING "1")
 
   target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall)
+
   # --- End of section ---
 
   # --- Linux-specific build settings and tasks ---
@@ -125,3 +126,20 @@ endif()
 # --- End of section ---
 
 setup_plugin_target(${CMAKE_PROJECT_NAME})
+if(OS_MACOS)
+  install(DIRECTORY "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_LIBS}/QtWebSockets.framework"
+          DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks"
+          COMPONENT obs_plugins
+          PATTERN "Headers" EXCLUDE)
+  if(${QT_VERSION} EQUAL 5)
+    set(_QT_FW_VERSION "${QT_VERSION}")
+  else()
+    set(_QT_FW_VERSION "A")
+  endif()
+  set(_COMMAND
+        "${CMAKE_INSTALL_NAME_TOOL} \\
+        -change @rpath/QtWebSockets.framework/Versions/${_QT_FW_VERSION}/QtWebSockets @loader_path/../Frameworks/QtWebSockets.framework/Versions/${_QT_FW_VERSION}/QtWebSockets \\
+        \\\"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.plugin/Contents/MacOS/${CMAKE_PROJECT_NAME}\\\"")
+  install(CODE "execute_process(COMMAND /bin/sh -c \"${_COMMAND}\")" COMPONENT obs_plugins)
+
+endif()
