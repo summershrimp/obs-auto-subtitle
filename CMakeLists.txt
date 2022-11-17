@@ -130,6 +130,18 @@ if(OS_MACOS)
     DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks"
     COMPONENT obs_plugins
     PATTERN "Headers" EXCLUDE)
+  install(
+    DIRECTORY "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}/tls"
+    DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/PlugIns"
+    COMPONENT obs_plugins)
+
+  find_package(OpenSSL REQUIRED)
+
+  install(
+    FILES ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY}
+    DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks"
+    COMPONENT obs_plugins)
+
   if(${QT_VERSION} EQUAL 5)
     set(_QT_FW_VERSION "${QT_VERSION}")
   else()
@@ -138,6 +150,7 @@ if(OS_MACOS)
   set(_COMMAND
       "${CMAKE_INSTALL_NAME_TOOL} \\
         -change @rpath/QtWebSockets.framework/Versions/${_QT_FW_VERSION}/QtWebSockets @loader_path/../Frameworks/QtWebSockets.framework/Versions/${_QT_FW_VERSION}/QtWebSockets \\
+        -add_rpath @loader_path/../Frameworks \\
         \\\"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.plugin/Contents/MacOS/${CMAKE_PROJECT_NAME}\\\""
   )
   install(CODE "execute_process(COMMAND /bin/sh -c \"${_COMMAND}\")" COMPONENT obs_plugins)
