@@ -24,31 +24,31 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <QMap>
 
 class TransBase : public QObject {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    typedef std::function<void(QString)> ResultCallback;
-    typedef std::function<void(QString)> ErrorCallback;
-    TransBase(QObject *parent);
-    void setResultCallback(ResultCallback cb);
-    void setErrorCallback(ErrorCallback cb);
-    void setParam(QString key, QString value);
-    virtual ~TransBase(){};
+	typedef std::function<void(QString)> ResultCallback;
+	typedef std::function<void(QString)> ErrorCallback;
+	TransBase(QObject *parent);
+	void setResultCallback(ResultCallback cb);
+	void setErrorCallback(ErrorCallback cb);
+	void setParam(QString key, QString value);
+	virtual ~TransBase(){};
 
 protected:
-    void callbackResult(QString);
-    void callbackError(QString);
-    QMap<QString, QString> params;
+	void callbackResult(QString);
+	void callbackError(QString);
+	QMap<QString, QString> params;
 
 signals:
-    void requestTranslate(QString, QString, QString);
+	void requestTranslate(QString, QString, QString);
 
 public slots:
-    virtual void onRequestTranslate(QString, QString, QString) = 0;
-private:
-    ResultCallback resultCallback;
-    ErrorCallback  errorCallback;
-};
+	virtual void onRequestTranslate(QString, QString, QString) = 0;
 
+private:
+	ResultCallback resultCallback;
+	ErrorCallback errorCallback;
+};
 
 #endif //OBS_AUTO_SUBTITLE_TRANSBASE_H

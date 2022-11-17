@@ -31,171 +31,186 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 using namespace std::placeholders;
 
 AliNLS::AliNLS(const QString &appKey, const QString &token, QObject *parent)
-        : ASRBase(parent), appKey(appKey), token(token){
-    connect(&ws, &QWebSocket::connected, this, &AliNLS::onConnected);
-    connect(&ws, &QWebSocket::disconnected, this, &AliNLS::onDisconnected);
-    connect(&ws, &QWebSocket::textMessageReceived, this, &AliNLS::onTextMessageReceived);
-    connect(this, &AliNLS::haveResult, this, &AliNLS::onResult);
-    connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(onError(QAbstractSocket::SocketError)));
-    task_id = QUuid::createUuid().toRfc4122().toHex();
-    _header["task_id"] = task_id;
-    _header["namespace"] = "SpeechTranscriber";
-    running = false;
+	: ASRBase(parent), appKey(appKey), token(token)
+{
+	connect(&ws, &QWebSocket::connected, this, &AliNLS::onConnected);
+	connect(&ws, &QWebSocket::disconnected, this, &AliNLS::onDisconnected);
+	connect(&ws, &QWebSocket::textMessageReceived, this,
+		&AliNLS::onTextMessageReceived);
+	connect(this, &AliNLS::haveResult, this, &AliNLS::onResult);
+	connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this,
+		SLOT(onError(QAbstractSocket::SocketError)));
+	task_id = QUuid::createUuid().toRfc4122().toHex();
+	_header["task_id"] = task_id;
+	_header["namespace"] = "SpeechTranscriber";
+	running = false;
 }
 
-void AliNLS::onStart(){
-    QNetworkRequest request;
-    QUrl url(ALINLS_URL);
-    qDebug()<< url.toString();
-    QUrlQuery query;
+void AliNLS::onStart()
+{
+	QNetworkRequest request;
+	QUrl url(ALINLS_URL);
+	qDebug() << url.toString();
+	QUrlQuery query;
 
-    url.setQuery(query);
-    request.setUrl(url);
-    request.setRawHeader(ALINLS_TOKEN_HEADER, token.toLocal8Bit());
-    ws.open(request);
+	url.setQuery(query);
+	request.setUrl(url);
+	request.setRawHeader(ALINLS_TOKEN_HEADER, token.toLocal8Bit());
+	ws.open(request);
 }
 
-void AliNLS::onError(QAbstractSocket::SocketError error) {
-    auto errorCb = getErrorCallback();
-    if(errorCb)
-        errorCb(ERROR_SOCKET, ws.errorString());
-    qDebug()<< ws.errorString();
+void AliNLS::onError(QAbstractSocket::SocketError error)
+{
+	auto errorCb = getErrorCallback();
+	if (errorCb)
+		errorCb(ERROR_SOCKET, ws.errorString());
+	qDebug() << ws.errorString();
 }
 
-void AliNLS::onConnected() {
-    _header["name"] = "StartTranscription";
-    _payload["sample_rate"] = 16000;
-    _payload["format"] = "pcm";
-    _payload["enable_ignore_sentence_timeout"] = true; // 忽略单句识别超时
-    auto iter = params.find("enable_inverse_text_normalization"); // ITN，阿拉伯数字
-    if(iter != params.end()) {
-        _payload["enable_inverse_text_normalization"] = iter.value() == "true";
-    } else {
-        _payload["enable_inverse_text_normalization"] = false;
-    }
+void AliNLS::onConnected()
+{
+	_header["name"] = "StartTranscription";
+	_payload["sample_rate"] = 16000;
+	_payload["format"] = "pcm";
+	_payload["enable_ignore_sentence_timeout"] = true; // 忽略单句识别超时
+	auto iter = params.find(
+		"enable_inverse_text_normalization"); // ITN，阿拉伯数字
+	if (iter != params.end()) {
+		_payload["enable_inverse_text_normalization"] = iter.value() ==
+								"true";
+	} else {
+		_payload["enable_inverse_text_normalization"] = false;
+	}
 
-    iter = params.find("enable_intermediate_result"); // 中间结果
-    if(iter != params.end()) {
-        _payload["enable_intermediate_result"] = iter.value() == "true";
-    } else {
-        _payload["enable_intermediate_result"] = false;
-    }
+	iter = params.find("enable_intermediate_result"); // 中间结果
+	if (iter != params.end()) {
+		_payload["enable_intermediate_result"] = iter.value() == "true";
+	} else {
+		_payload["enable_intermediate_result"] = false;
+	}
 
-    iter = params.find("enable_punctuation_prediction"); // 标点符号
-    if(iter != params.end()) {
-        _payload["enable_punctuation_prediction"] = iter.value() == "true";
-    } else {
-        _payload["enable_punctuation_prediction"] = false;
-    }
+	iter = params.find("enable_punctuation_prediction"); // 标点符号
+	if (iter != params.end()) {
+		_payload["enable_punctuation_prediction"] = iter.value() ==
+							    "true";
+	} else {
+		_payload["enable_punctuation_prediction"] = false;
+	}
 
-    _payload["max_sentence_silence"] = 400;
+	_payload["max_sentence_silence"] = 400;
 
-    ws.sendTextMessage(serializeReq());
-    qDebug() << "WebSocket connected";
+	ws.sendTextMessage(serializeReq());
+	qDebug() << "WebSocket connected";
 }
 
-void AliNLS::onDisconnected() {
-    running = false;
-    auto disconnectCb = getDisconnectedCallback();
-    if(disconnectCb)
-        disconnectCb();
-    qDebug() << "WebSocket disconnected";
-
+void AliNLS::onDisconnected()
+{
+	running = false;
+	auto disconnectCb = getDisconnectedCallback();
+	if (disconnectCb)
+		disconnectCb();
+	qDebug() << "WebSocket disconnected";
 }
 
-
-void AliNLS::onSendAudioMessage(const char *data, unsigned long size){
-    if(! running){
-        return;
-    }
-    ws.sendBinaryMessage(QByteArray::fromRawData(data, size));
+void AliNLS::onSendAudioMessage(const char *data, unsigned long size)
+{
+	if (!running) {
+		return;
+	}
+	ws.sendBinaryMessage(QByteArray::fromRawData(data, size));
 }
 
+void AliNLS::onTextMessageReceived(const QString message)
+{
+	QJsonDocument doc(QJsonDocument::fromJson(message.toUtf8()));
 
-void AliNLS::onTextMessageReceived(const QString message) {
-    QJsonDocument doc(QJsonDocument::fromJson(message.toUtf8()));
+	bool ok = false;
+	QString output;
+	int type;
 
-    bool ok = false;
-    QString output;
-    int type;
-
-    QString msgName = doc["header"]["name"].toString();
-    if (msgName == "TranscriptionStarted") {
-        connect(this, &ASRBase::sendAudioMessage, this, &AliNLS::onSendAudioMessage);
-        auto connectCb = getConnectedCallback();
-        if (connectCb)
-            connectCb();
-        running = true;
-    } else if(msgName == "TranscriptionResultChanged") {
-        output = doc["payload"]["result"].toString();
-        type = ResultType_Middle;
-        ok = true;
-    } else if (msgName == "SentenceEnd") {
-        output = doc["payload"]["result"].toString();
-        type = ResultType_End;
-        ok = true;
-    } else {
-        auto status = doc["header"]["status"].toInt();
-        if(status == 40000004) {
-            running = false;
-            ws.close();
-            emit start();
-        } else if(status != 20000000) {
-            auto cb = getErrorCallback();
-            if(cb) {
-                cb(ERROR_API, doc["header"]["status_text"].toString());
-            }
-        }
-        qDebug() << message;
-    }
-    if(!ok){
-        return;
-    }
-    emit haveResult(output, type);
+	QString msgName = doc["header"]["name"].toString();
+	if (msgName == "TranscriptionStarted") {
+		connect(this, &ASRBase::sendAudioMessage, this,
+			&AliNLS::onSendAudioMessage);
+		auto connectCb = getConnectedCallback();
+		if (connectCb)
+			connectCb();
+		running = true;
+	} else if (msgName == "TranscriptionResultChanged") {
+		output = doc["payload"]["result"].toString();
+		type = ResultType_Middle;
+		ok = true;
+	} else if (msgName == "SentenceEnd") {
+		output = doc["payload"]["result"].toString();
+		type = ResultType_End;
+		ok = true;
+	} else {
+		auto status = doc["header"]["status"].toInt();
+		if (status == 40000004) {
+			running = false;
+			ws.close();
+			emit start();
+		} else if (status != 20000000) {
+			auto cb = getErrorCallback();
+			if (cb) {
+				cb(ERROR_API,
+				   doc["header"]["status_text"].toString());
+			}
+		}
+		qDebug() << message;
+	}
+	if (!ok) {
+		return;
+	}
+	emit haveResult(output, type);
 }
 
-void AliNLS::onResult(QString message, int type) {
-    auto callback = getResultCallback();
-    if(callback)
-        callback(message, type);
+void AliNLS::onResult(QString message, int type)
+{
+	auto callback = getResultCallback();
+	if (callback)
+		callback(message, type);
 }
 
-void AliNLS::onStop() {
-    _header["name"] = "StopTranscription";
-    ws.sendTextMessage(serializeReq());
-    ws.close();
+void AliNLS::onStop()
+{
+	_header["name"] = "StopTranscription";
+	ws.sendTextMessage(serializeReq());
+	ws.close();
 }
 
-QString AliNLS::getAppKey() {
-    return appKey;
+QString AliNLS::getAppKey()
+{
+	return appKey;
 }
 
-QString AliNLS::getToken() {
-    return token;
+QString AliNLS::getToken()
+{
+	return token;
 }
 
-QString AliNLS::serializeReq() {
-    QJsonDocument doc;
-    QJsonObject root;
-    QJsonObject header;
-    _header["message_id"] = QUuid::createUuid().toRfc4122().toHex();
-    _header["appkey"] = appKey;
-    for (auto i = _header.begin(); i != _header.end(); ++i){
-        header.insert(i.key(), QJsonValue(i.value()));
-    }
-    root.insert("header", header);
-    QJsonObject payload;
-    for (auto i = _payload.begin(); i != _payload.end(); ++i){
-        payload.insert(i.key(), i.value());
-    }
-    root.insert("payload", payload);
-    doc.setObject(root);
-    _payload.clear();
-    return doc.toJson();
+QString AliNLS::serializeReq()
+{
+	QJsonDocument doc;
+	QJsonObject root;
+	QJsonObject header;
+	_header["message_id"] = QUuid::createUuid().toRfc4122().toHex();
+	_header["appkey"] = appKey;
+	for (auto i = _header.begin(); i != _header.end(); ++i) {
+		header.insert(i.key(), QJsonValue(i.value()));
+	}
+	root.insert("header", header);
+	QJsonObject payload;
+	for (auto i = _payload.begin(); i != _payload.end(); ++i) {
+		payload.insert(i.key(), i.value());
+	}
+	root.insert("payload", payload);
+	doc.setObject(root);
+	_payload.clear();
+	return doc.toJson();
 }
 
-
-AliNLS::~AliNLS() {
-    stop();
+AliNLS::~AliNLS()
+{
+	stop();
 }
-

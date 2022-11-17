@@ -21,7 +21,6 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #define GS_ENDPOINT_URL "https://script.google.com/macros/s/%1/exec"
 
-
 #include <QtNetwork>
 #include "TransBase.h"
 
@@ -30,16 +29,15 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 class GScriptTrans : public TransBase {
 public:
-    GScriptTrans(QString deployId, QObject *parent = nullptr);
-    ~GScriptTrans();
+	GScriptTrans(QString deployId, QObject *parent = nullptr);
+	~GScriptTrans();
 public slots:
-    void onResult(QNetworkReply *rep);
-    void onRequestTranslate(QString, QString, QString);
+	void onResult(QNetworkReply *rep);
+	void onRequestTranslate(QString, QString, QString);
 
 private:
-    QString deployId;
-    QNetworkAccessManager manager;
+	QString deployId;
+	QNetworkAccessManager manager;
 };
-
 
 #endif

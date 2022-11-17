@@ -24,55 +24,55 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <QMap>
 
 class ASRBase : public QObject {
-    Q_OBJECT
-public:    
-    enum ErrorType {
-        ERROR_NOERROR = 0,
-        ERROR_SOCKET,
-        ERROR_API,
-        ERROR_END
-    };
+	Q_OBJECT
+public:
+	enum ErrorType {
+		ERROR_NOERROR = 0,
+		ERROR_SOCKET,
+		ERROR_API,
+		ERROR_END
+	};
 
-    typedef std::function<void(QString, int)> ResultCallback;
-    typedef std::function<void(ErrorType, QString)> ErrorCallback;
-    typedef std::function<void()> ConnectedCallback;
-    typedef std::function<void()> DisconnectedCallback;
+	typedef std::function<void(QString, int)> ResultCallback;
+	typedef std::function<void(ErrorType, QString)> ErrorCallback;
+	typedef std::function<void()> ConnectedCallback;
+	typedef std::function<void()> DisconnectedCallback;
 
+	enum ResultType {
+		ResultType_End = 0,
+		ResultType_Middle
 
-    enum ResultType {
-        ResultType_End = 0,
-        ResultType_Middle
+	};
 
-    };
+	ASRBase(QObject *parent);
+	void setResultCallback(ResultCallback cb);
+	void setErrorCallback(ErrorCallback cb);
+	void setConnectedCallback(ConnectedCallback cb);
+	void setDisconnectedCallback(DisconnectedCallback cb);
+	void setParam(QString key, QString value);
+	virtual ~ASRBase(){};
 
-    ASRBase(QObject *parent);
-    void setResultCallback(ResultCallback cb);
-    void setErrorCallback(ErrorCallback cb);
-    void setConnectedCallback(ConnectedCallback cb);
-    void setDisconnectedCallback(DisconnectedCallback cb);
-    void setParam(QString key, QString value);
-    virtual ~ASRBase(){};
 protected:
-    ResultCallback getResultCallback();
-    ErrorCallback getErrorCallback();
-    ConnectedCallback getConnectedCallback();
-    DisconnectedCallback getDisconnectedCallback();
-    QMap<QString, QString> params;
+	ResultCallback getResultCallback();
+	ErrorCallback getErrorCallback();
+	ConnectedCallback getConnectedCallback();
+	DisconnectedCallback getDisconnectedCallback();
+	QMap<QString, QString> params;
 
 signals:
-    void sendAudioMessage(const char *, unsigned long);
-    void start();
-    void stop();
+	void sendAudioMessage(const char *, unsigned long);
+	void start();
+	void stop();
 
 public slots:
-    virtual void onStart() = 0;
-    virtual void onStop() = 0;
-private:
-    ResultCallback resultCallback;
-    ErrorCallback  errorCallback;
-    ConnectedCallback connectedCallback;
-    DisconnectedCallback disconnectedCallback;
-};
+	virtual void onStart() = 0;
+	virtual void onStop() = 0;
 
+private:
+	ResultCallback resultCallback;
+	ErrorCallback errorCallback;
+	ConnectedCallback connectedCallback;
+	DisconnectedCallback disconnectedCallback;
+};
 
 #endif //OBS_AUTO_SUBTITLE_ASRBASE_H

@@ -33,149 +33,167 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 using namespace std::placeholders;
 
-XFRtASR::XFRtASR(const QString &appId, const QString &apiKey, QObject *parent)  : ASRBase(parent), appId(appId), apiKey(apiKey){
-    connect(&ws, &QWebSocket::connected, this, &XFRtASR::onConnected);
-    connect(&ws, &QWebSocket::disconnected, this, &XFRtASR::onDisconnected);
-    connect(&ws, &QWebSocket::textMessageReceived, this, &XFRtASR::onTextMessageReceived);
-    connect(this, &XFRtASR::haveResult, this, &XFRtASR::onResult);
-    connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(onError(QAbstractSocket::SocketError)));
+XFRtASR::XFRtASR(const QString &appId, const QString &apiKey, QObject *parent)
+	: ASRBase(parent), appId(appId), apiKey(apiKey)
+{
+	connect(&ws, &QWebSocket::connected, this, &XFRtASR::onConnected);
+	connect(&ws, &QWebSocket::disconnected, this, &XFRtASR::onDisconnected);
+	connect(&ws, &QWebSocket::textMessageReceived, this,
+		&XFRtASR::onTextMessageReceived);
+	connect(this, &XFRtASR::haveResult, this, &XFRtASR::onResult);
+	connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this,
+		SLOT(onError(QAbstractSocket::SocketError)));
 
-    running = false;
+	running = false;
 }
 
-void XFRtASR::onStart(){
-    QUrl url(buildQuery());
-    ws.open(url);
+void XFRtASR::onStart()
+{
+	QUrl url(buildQuery());
+	ws.open(url);
 }
 
-void XFRtASR::onError(QAbstractSocket::SocketError error) {
-    auto cb = getErrorCallback();
-    if(cb)
-        cb(ERROR_SOCKET, ws.errorString());
-    qDebug()<< ws.errorString();
+void XFRtASR::onError(QAbstractSocket::SocketError error)
+{
+	auto cb = getErrorCallback();
+	if (cb)
+		cb(ERROR_SOCKET, ws.errorString());
+	qDebug() << ws.errorString();
 }
 
-void XFRtASR::onConnected() {
-    auto cb = getConnectedCallback();
-    if (cb)
-        cb();
-    qDebug() << "WebSocket connected";
-    running = true;
-    connect(this, &ASRBase::sendAudioMessage, this, &XFRtASR::onSendAudioMessage);
+void XFRtASR::onConnected()
+{
+	auto cb = getConnectedCallback();
+	if (cb)
+		cb();
+	qDebug() << "WebSocket connected";
+	running = true;
+	connect(this, &ASRBase::sendAudioMessage, this,
+		&XFRtASR::onSendAudioMessage);
 }
 
-void XFRtASR::onDisconnected() {
-    running = false;
-    auto cb = getDisconnectedCallback();
-    if(cb)
-        cb();
-    qDebug() << "WebSocket disconnected";
-
+void XFRtASR::onDisconnected()
+{
+	running = false;
+	auto cb = getDisconnectedCallback();
+	if (cb)
+		cb();
+	qDebug() << "WebSocket disconnected";
 }
 
-
-void XFRtASR::onSendAudioMessage(const char *data, unsigned long size){
-    if(! running){
-        return;
-    }
-    ws.sendBinaryMessage(QByteArray::fromRawData((const char*)data, size));
+void XFRtASR::onSendAudioMessage(const char *data, unsigned long size)
+{
+	if (!running) {
+		return;
+	}
+	ws.sendBinaryMessage(QByteArray::fromRawData((const char *)data, size));
 }
 
+void XFRtASR::onTextMessageReceived(const QString message)
+{
+	QJsonDocument doc(QJsonDocument::fromJson(message.toUtf8()));
+	if (doc["action"].toString() != "result" ||
+	    doc["code"].toString() != "0") {
+		if (doc["action"].toString() == "error") {
+			auto errorCb = getErrorCallback();
+			if (errorCb)
+				errorCb(ERROR_API, doc["desc"].toString());
+		}
+		qDebug() << message;
+		return;
+	}
+	auto data = doc["data"];
+	if (!data.isString()) {
+		return;
+	}
+	QJsonDocument dataDoc(
+		QJsonDocument::fromJson(data.toString().toUtf8()));
+	auto cn = dataDoc["cn"];
+	if (!cn.isObject()) {
+		return;
+	}
+	QString output;
+	auto type = cn["st"]["type"];
+	if (!type.isString()) {
+		return;
+	}
+	auto typeStr = type.toString();
+	auto rt = cn["st"]["rt"];
+	if (!rt.isArray()) {
+		return;
+	}
+	for (auto i : rt.toArray()) {
+		auto ws = i.toObject().value("ws");
+		if (!ws.isArray()) {
+			return;
+		}
 
-void XFRtASR::onTextMessageReceived(const QString message) {
-    QJsonDocument doc(QJsonDocument::fromJson(message.toUtf8()));
-    if(doc["action"].toString() != "result" || doc["code"].toString() != "0") {
-        if(doc["action"].toString() == "error"){
-            auto errorCb = getErrorCallback();
-            if(errorCb)
-                errorCb(ERROR_API, doc["desc"].toString());
-        }
-        qDebug() << message;
-        return;
-    }
-    auto data = doc["data"];
-    if(!data.isString()) {
-        return;
-    }
-    QJsonDocument dataDoc(QJsonDocument::fromJson(data.toString().toUtf8()));
-    auto cn = dataDoc["cn"];
-    if(!cn.isObject()) {
-        return;
-    }
-    QString output;
-    auto type = cn["st"]["type"];
-    if(!type.isString()) {
-        return;
-    }
-    auto typeStr = type.toString();
-    auto rt = cn["st"]["rt"];
-    if(!rt.isArray()){
-        return;
-    }
-    for(auto i: rt.toArray()){
-        auto ws = i.toObject().value("ws");
-        if(!ws.isArray()) {
-            return;
-        }
-
-        for(auto w: ws.toArray()){
-            auto cw = w.toObject().value("cw");
-            if(!cw.isArray()){
-                return;
-            }
-            for(auto c: cw.toArray()){
-                output += c.toObject().value("w").toString();
-            }
-        }
-    }
-    emit haveResult(output, typeStr.toInt());
+		for (auto w : ws.toArray()) {
+			auto cw = w.toObject().value("cw");
+			if (!cw.isArray()) {
+				return;
+			}
+			for (auto c : cw.toArray()) {
+				output += c.toObject().value("w").toString();
+			}
+		}
+	}
+	emit haveResult(output, typeStr.toInt());
 }
 
-void XFRtASR::onResult(QString message, int type) {
-    auto callback = getResultCallback();
-    if(callback)
-        callback(message, type);
+void XFRtASR::onResult(QString message, int type)
+{
+	auto callback = getResultCallback();
+	if (callback)
+		callback(message, type);
 }
 
-
-void XFRtASR::onStop() {
-    ws.sendBinaryMessage(QString(XFYUN_RTASR_GOODBYE).toUtf8());
-    ws.close();
+void XFRtASR::onStop()
+{
+	ws.sendBinaryMessage(QString(XFYUN_RTASR_GOODBYE).toUtf8());
+	ws.close();
 }
 
-QUrl XFRtASR::buildQuery() {
-    QString ts;
-    QString signa;
-    ts = QString::number(time(NULL));
-    QString baseString = appId + ts;
-    QString signData = QCryptographicHash::hash(baseString.toLocal8Bit(), QCryptographicHash::Md5).toHex();
-    signa = QMessageAuthenticationCode::hash(signData.toLocal8Bit(), apiKey.toLocal8Bit(), QCryptographicHash::Sha1)
-                .toBase64();
-    QUrl url(XFYUN_RTASR_URL);
-    QUrlQuery query;
-    query.addQueryItem("appid", appId);
-    query.addQueryItem("ts", ts);
-    query.addQueryItem("signa", signa);
-    if(params.find("punc") != params.end()){
-        query.addQueryItem("punc", params["punc"]);
-    }
-    if(params.find("pd") != params.end()){
-        query.addQueryItem("pd", params["pd"]);
-    }
-    url.setQuery(query);
-    qDebug() << url;
-    return url;
+QUrl XFRtASR::buildQuery()
+{
+	QString ts;
+	QString signa;
+	ts = QString::number(time(NULL));
+	QString baseString = appId + ts;
+	QString signData = QCryptographicHash::hash(baseString.toLocal8Bit(),
+						    QCryptographicHash::Md5)
+				   .toHex();
+	signa = QMessageAuthenticationCode::hash(signData.toLocal8Bit(),
+						 apiKey.toLocal8Bit(),
+						 QCryptographicHash::Sha1)
+			.toBase64();
+	QUrl url(XFYUN_RTASR_URL);
+	QUrlQuery query;
+	query.addQueryItem("appid", appId);
+	query.addQueryItem("ts", ts);
+	query.addQueryItem("signa", signa);
+	if (params.find("punc") != params.end()) {
+		query.addQueryItem("punc", params["punc"]);
+	}
+	if (params.find("pd") != params.end()) {
+		query.addQueryItem("pd", params["pd"]);
+	}
+	url.setQuery(query);
+	qDebug() << url;
+	return url;
 }
 
-QString XFRtASR::getAppId() {
-    return appId;
+QString XFRtASR::getAppId()
+{
+	return appId;
 }
 
-QString XFRtASR::getApiKey() {
-    return apiKey;
+QString XFRtASR::getApiKey()
+{
+	return apiKey;
 }
 
-
-XFRtASR::~XFRtASR() {
-    emit stop();
+XFRtASR::~XFRtASR()
+{
+	emit stop();
 }
