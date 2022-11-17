@@ -15,11 +15,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
-
 #include <obs-module.h>
 #include <util/platform.h>
-
+#include <QCoreApplication>
+#include <QDir>
 #include "obs-auto-subtitle.h"
+
+#if defined(__APPLE__)
+#include <dlfcn.h>
+#endif
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_AUTHOR("Yibai Zhang")
@@ -31,9 +35,19 @@ struct obs_source_info autosub_filter_info;
 bool obs_module_load(void)
 {
 
-#ifdef _WIN32
-	(void)os_dlopen("./libcrypto-1_1-x64.dll");
-	(void)os_dlopen("./libssl-1_1-x64.dll");
+#if defined(__APPLE__)
+	Dl_info info;
+	dladdr((const void *)obs_module_load, &info);
+	blog(LOG_INFO, "path: %s", info.dli_fname);
+	QFileInfo plugin_path(info.dli_fname);
+	QDir tls_plugin_path = plugin_path.dir();
+	bool exist_plugins = tls_plugin_path.cd(QStringLiteral("../PlugIns"));
+	if (!exist_plugins) {
+		blog(LOG_INFO, "TLS plugins is not packed, I may not work.");
+	} else {
+		QCoreApplication::addLibraryPath(
+			tls_plugin_path.absolutePath());
+	}
 #endif
 
 	autosub_filter_info = create_autosub_filter_info();
