@@ -136,9 +136,10 @@ if(OS_MACOS)
     COMPONENT obs_plugins)
 
   find_package(OpenSSL REQUIRED)
-
+  get_filename_component(OPENSSL_LIBRARY_DIR "${OPENSSL_CRYPTO_LIBRARY}" DIRECTORY)
+  file(GLOB OPENSSL_TARGET_FILES "${OPENSSL_LIBRARY_DIR}/*.dylib")
   install(
-    FILES ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY}
+    FILES ${OPENSSL_TARGET_FILES}
     DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks"
     COMPONENT obs_plugins)
 
