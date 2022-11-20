@@ -156,4 +156,12 @@ if(OS_MACOS)
   )
   install(CODE "execute_process(COMMAND /bin/sh -c \"${_COMMAND}\")" COMPONENT obs_plugins)
 
+  set(_COMMAND
+      "/usr/bin/codesign --force \\
+      --sign \\\"${OBS_BUNDLE_CODESIGN_IDENTITY}\\\" \\
+      --options runtime \\
+      --deep \\
+      --entitlements \\\"${CMAKE_SOURCE_DIR}/cmake/bundle/macOS/entitlements.plist\\\" \\
+      \\\"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.plugin\\\"")
+  install(CODE "execute_process(COMMAND /bin/sh -c \"${_COMMAND}\")" COMPONENT obs_plugins)
 endif()
