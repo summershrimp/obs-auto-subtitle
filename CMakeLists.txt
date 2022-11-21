@@ -143,6 +143,33 @@ if(OS_MACOS)
     DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks"
     COMPONENT obs_plugins)
 
+  # A workround for redistribute brew installed openssl
+  if(IS_SYMLINK "${OPENSSL_ROOT_DIR}")
+    file(READ_SYMLINK "${OPENSSL_ROOT_DIR}" OPENSSL_REAL_DIR)
+    if(NOT IS_ABSOLUTE "${OPENSSL_REAL_DIR}")
+      get_filename_component(_dir "${OPENSSL_ROOT_DIR}" DIRECTORY)
+      get_filename_component(OPENSSL_REAL_DIR "${_dir}/${OPENSSL_REAL_DIR}" ABSOLUTE)
+    endif()
+  else()
+    set(OPENSSL_REAL_DIR "${OPENSSL_ROOT_DIR}")
+  endif()
+
+  message(STATUS "OpenSSL: ${OPENSSL_REAL_DIR}")
+  set(_COMMAND
+      "${CMAKE_INSTALL_NAME_TOOL} \\
+      -id @rpath/libssl.1.1.dylib \\
+      -change ${OPENSSL_REAL_DIR}/lib/libcrypto.1.1.dylib @rpath/libcrypto.1.1.dylib \\
+      -add_rpath @loader_path/../Frameworks \\
+      \\\"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks/libssl.dylib\\\""
+  )
+  install(CODE "execute_process(COMMAND /bin/sh -c \"${_COMMAND}\")" COMPONENT obs_plugins)
+  set(_COMMAND
+      "${CMAKE_INSTALL_NAME_TOOL} \\
+      -id @rpath/libcrypto.1.1.dylib \\
+      \\\"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks/libcrypto.dylib\\\""
+  )
+  install(CODE "execute_process(COMMAND /bin/sh -c \"${_COMMAND}\")" COMPONENT obs_plugins)
+
   if(${QT_VERSION} EQUAL 5)
     set(_QT_FW_VERSION "${QT_VERSION}")
   else()
