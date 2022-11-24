@@ -136,11 +136,22 @@ if(OS_MACOS)
     COMPONENT obs_plugins)
 
   find_package(OpenSSL REQUIRED)
+  foreach(_lib IN ITEMS ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
+    if(IS_SYMLINK "${_lib}")
+      file(READ_SYMLINK "${_lib}" _real)
+      if(NOT IS_ABSOLUTE "${_real}")
+        get_filename_component(_dir "${_lib}" DIRECTORY)
+        get_filename_component(_real "${_dir}/${_real}" ABSOLUTE)
+      endif()
+    else()
+      set(_real "${_lib}")
+    endif()
 
-  install(
-    FILES ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY}
-    DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks"
-    COMPONENT obs_plugins)
+    install(
+      FILES ${_lib} ${_real}
+      DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks"
+      COMPONENT obs_plugins)
+  endforeach()
 
   if(${QT_VERSION} EQUAL 5)
     set(_QT_FW_VERSION "${QT_VERSION}")
