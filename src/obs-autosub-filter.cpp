@@ -92,13 +92,16 @@ static bool translate_provider_modified(void *priv, obs_properties_t *props,
 					obs_data_t *settings)
 {
 	int cur_provider = obs_data_get_int(settings, PROP_TRANS_PROVIDER);
+	int enabled = obs_data_get_bool(settings, PROP_TRANS_ENABLED);
 	auto s = (struct autosub_filter *)priv;
 	for (auto iter : TransBuilders.getAllBuilder()) {
 		iter.second->hideProperties(props);
 	}
-	auto cur_builder = TransBuilders.getBuilder(cur_provider);
-	if (cur_builder) {
-		cur_builder->showProperties(props);
+	if (enabled) {
+		auto cur_builder = TransBuilders.getBuilder(cur_provider);
+		if (cur_builder) {
+			cur_builder->showProperties(props);
+		}
 	}
 	return true;
 }
@@ -112,14 +115,11 @@ static bool translate_enable_modified(void *priv, obs_properties_t *props,
 	if (!enabled) {
 		PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_PROVIDER);
 		PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_TARGET_TEXT_SOURCE);
-		for (auto iter : TransBuilders.getAllBuilder()) {
-			iter.second->hideProperties(props);
-		}
 	} else {
 		PROPERTY_SET_VISIBLE(props, PROP_TRANS_PROVIDER);
 		PROPERTY_SET_VISIBLE(props, PROP_TRANS_TARGET_TEXT_SOURCE);
-		translate_provider_modified(priv, props, property, settings);
 	}
+	translate_provider_modified(priv, props, property, settings);
 	return true;
 }
 
