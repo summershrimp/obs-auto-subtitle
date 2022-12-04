@@ -1,0 +1,167 @@
+// Yitu Speech GRPC API: ver 2.3
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.yitutech.speech";
+option java_outer_classname = "StreamingProtos";
+
+
+// 音频相关设置
+message AudioConfig {
+    // 音频的编码
+    enum AudioEncoding {
+        UNSPECIFIED = 0;
+        PCM = 1;
+        AAC = 2;
+        MPEG2 = 3;
+    }
+    AudioEncoding aue = 1;
+    // 采样率（范围为8000-48000）
+    int32 sampleRate = 2;
+}
+
+
+// 识别相关设置
+message SpeechConfig {
+    // 转写的语言
+    enum Language {
+        UNSPECIFIED = 0;
+        MANDARIN = 1;
+        ENGLISH = 2;
+
+    }
+
+    Language lang = 1;
+    // 情景模式，目前仅支持通用0
+    enum Scene {
+        GENERALSCENE = 0;
+    }
+    Scene scene = 2;
+    // 自定义词语（支持中文2-4个字，中英混合4-8个字符）
+    repeated string customWord = 3;
+    // 使用已经上传的自定义词库，填写词库ID。（词语及词库总词数不超过1000个，支持中文2-4个字，中英混合4-8个字符）
+    repeated int32 useCustomWordsId = 4;
+    // 识别类型（0-全部，1-仅逐句, 2-仅逐字）
+    enum RecognizeType {
+        ALL = 0;
+        UTTERANCE = 1;
+        STREAMING = 2;
+    }
+    RecognizeType recognizeType = 5;
+
+    // 统一数字的转换方式。默认false，开启阿拉伯数字能力。true，关闭阿拉伯数字能力。
+    bool disableConvertNumber = 6;
+    // 加标点。默认false，开启添加标点。true，关闭添加标点。
+    bool disablePunctuation = 7;
+    // 指定规则替换文本
+    WordsReplace wordsReplace = 8;
+    // 关键词识别。转写结果中返回同音词。（支持词库总数不超过30个。支持中文2-4个字）*
+    repeated string keyWords = 9;
+
+}
+
+
+
+// 指定规则替换文本
+message WordsReplace {
+    // 待替换的文本。最多支持100个词
+    repeated string keywords = 1;
+    // 替换后的字符。不指定时替换为空。最多支持100个符号，和待替换文本一一对应
+    repeated string replace = 2;
+}
+
+
+
+// 音频流请求的相关设置。
+message StreamingSpeechConfig {
+    // 音频设置。
+    AudioConfig audioConfig = 1;
+    // 识别设置。
+    SpeechConfig speechConfig = 2;
+}
+
+// 流请求
+message StreamingSpeechRequest {
+    // 一个流的请求，需要先发送设置，然后发送音频数据
+    oneof requestPayload {
+        // 音频流设置
+        StreamingSpeechConfig streamingSpeechConfig = 1;
+
+        // 音频数据。每个请求的音频长度最长为60秒。针对实时场景，音频输入的速度超过实时时，性能无法保障，需与依图沟通
+        bytes audioData = 2;
+    }
+}
+
+// 音频流识别请求回应
+message StreamingSpeechResponse {
+    // 此次实时处理的全局唯一ID。
+    string globalStreamId = 1;
+    // 返回识别结果
+    StreamingSpeechResult result = 2;
+    // 返回识别状态
+    StreamingSpeechStatus status = 3;
+}
+
+// 音频识别结果
+message StreamingSpeechResult {
+    // 此识别结果是否为最终结果
+    bool isFinal = 1;
+    // 最好的转写候选
+    StreamingTranscription bestTranscription = 2;
+}
+
+
+// 音频当前识别状态
+message StreamingSpeechStatus {
+    // 当前音频处理进行到的时间点（音频开始时间为0）
+    int64 processedTimestamp = 1;
+}
+
+// 转写
+message StreamingTranscription {
+    // 转写结果
+    string transcribedText = 1;
+    // 转写结果中包含热词的内容
+    repeated KeyWordsType keyWordsType = 2;
+    // 转写结果的分解（只对final状态结果有效，返回每个字及标点的详细信息）
+    repeated StreamingTranscriptionPiece piece = 3;
+}
+
+//转写结果中包含关键词KeyWords的内容
+message KeyWordsType {
+    // 命中的关键词KeyWords。返回不多于10个。
+    string keyWords = 1;
+    // 命中的关键词KeyWords相应的分数。分数越高表示和关键词越相似，对应kws中的分数。
+    float keyWordsScore = 2;
+    int32 startTimestamp = 3;// 音频中对应的起始时间
+    int32 endTimestamp = 4;// 音频中对应的结束时间
+}
+
+// 转写分解
+message StreamingTranscriptionPiece {
+    // 转写分解结果。
+    string transcribedText = 1;
+    // 分解开始时间（音频开始时间为0）。
+    int64 beginTimestamp = 2;
+    // 分解结束时间（音频开始时间为0）。
+    int64 endTimestamp = 3;
+
+    // 转写结果的类型，一个结果可以对应多的状态, 为以下状态按位与。
+    //    TOKEN = 1;
+    //    PUNCTUATION = 2;
+    //    NUMBER = 4;
+    //    PATCH = 8;
+    //    DISFLUENCY = 16;
+    int32 transcribedType = 4;
+
+}
+
+
+
+// 音频流识别服务。
+service SpeechRecognition {
+    // 传入metadata "x-api-key"作为验证。
+    rpc RecognizeStream(stream StreamingSpeechRequest) returns(stream StreamingSpeechResponse);
+
+}

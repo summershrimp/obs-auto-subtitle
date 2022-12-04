@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16...3.21)
 
 # Change obs-plugintemplate to your plugin's name in a machine-readable format (e.g.:
 # obs-myawesomeplugin) and set
-project(obs-auto-subtitle VERSION 1.0.0)
+project(obs-auto-subtitle VERSION 0.4.2)
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
 # Replace `Your Name Here` with the name (yours or your organization's) you want to see as the
@@ -33,16 +33,6 @@ set(obs-auto-subtitle_SOURCES
     src/vendor/Trans/TransBase.cpp
     src/vendor/Trans/XFTrans.cpp
     src/vendor/Trans/GScriptTrans.cpp)
-
-if(WIN32)
-  set(obs-auto-subtitle_SOURCES
-      ${obs-auto-subtitle_SOURCES}
-      src/builder/ASR/MSSAPIBuilder.cpp
-      src/vendor/ASR/mssapi-captions/captions-handler.cpp
-      src/vendor/ASR/mssapi-captions/captions-mssapi.cpp
-      src/vendor/ASR/mssapi-captions/captions-mssapi-stream.cpp
-      src/vendor/ASR/mssapi.cpp)
-endif()
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${obs-auto-subtitle_SOURCES})
 
@@ -78,10 +68,68 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
+option(BUILD_YITU "Build YITU Speech provider" ON)
+
+if(BUILD_YITU)
+  include(cmake/FetchGRPC.cmake)
+  set(_PROTOBUF_LIBPROTOBUF libprotobuf)
+  set(_PROTOBUF_PROTOC $<TARGET_FILE:protoc>)
+  set(_GRPC_GRPCPP_UNSECURE grpc++_unsecure)
+  set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
+  set(_GRPC_GRPCPP_REFLECTION grpc++_reflection)
+  # Proto file
+  get_filename_component(yitu_proto "src/vendor/ASR/yitu/protos/yitu_streaming.proto" ABSOLUTE)
+  get_filename_component(yitu_proto_path "${yitu_proto}" PATH)
+
+  # Generated sources
+  set(yitu_proto_srcs "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/ASR/yitu/src/yitu_streaming.pb.cc")
+  set(yitu_proto_hdrs "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/ASR/yitu/src/yitu_streaming.pb.h")
+  set(yitu_grpc_srcs "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/ASR/yitu/src/yitu_streaming.grpc.pb.cc")
+  set(yitu_grpc_hdrs "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/ASR/yitu/src/yitu_streaming.grpc.pb.h")
+  add_custom_target(
+    generate_yitu_grpc
+    COMMAND ${_PROTOBUF_PROTOC}
+      --grpc_out "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/ASR/yitu/src"
+      --cpp_out "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/ASR/yitu/src"
+      -I "${yitu_proto_path}"
+      --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+      "${yitu_proto}"
+    DEPENDS "${yitu_proto}"
+    SOURCES "${yitu_proto}")
+
+
+  add_library(yitu_grpc_proto
+    ${yitu_proto_srcs}
+    ${yitu_proto_hdrs}
+    ${yitu_grpc_srcs}
+    ${yitu_grpc_hdrs})
+  
+  target_link_libraries(yitu_grpc_proto
+    ${_GRPC_GRPCPP_UNSECURE}
+    ${_PROTOBUF_LIBPROTOBUF})
+
+  target_sources(${CMAKE_PROJECT_NAME} PRIVATE 
+      "src/vendor/ASR/yitu/SpeechRecognitionClient.cpp"
+      "src/vendor/ASR/YiTuASR.cpp"
+      "src/builder/ASR/YiTuASRBuilder.cpp")
+  
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE yitu_grpc_proto)
+
+endif()
+
 # --- End of section ---
 
 # --- Windows-specific build settings and tasks ---
 if(OS_WINDOWS)
+
+  set(obs-auto-subtitle_WINDOWS_SOURCES
+      src/builder/ASR/MSSAPIBuilder.cpp
+      src/vendor/ASR/mssapi-captions/captions-handler.cpp
+      src/vendor/ASR/mssapi-captions/captions-mssapi.cpp
+      src/vendor/ASR/mssapi-captions/captions-mssapi-stream.cpp
+      src/vendor/ASR/mssapi.cpp)
+  target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${obs-auto-subtitle_WINDOWS_SOURCES})
+
   configure_file(cmake/bundle/windows/installer-Windows.iss.in
                  ${CMAKE_BINARY_DIR}/installer-Windows.generated.iss)
 

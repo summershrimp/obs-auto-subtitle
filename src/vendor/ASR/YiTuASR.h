@@ -16,21 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
 
-#ifndef OBS_AUTO_SUBTITLE_MSSAPI_H
-#define OBS_AUTO_SUBTITLE_MSSAPI_H
+#ifndef OBS_AUTO_SUBTITLE_YITUASR_H
+#define OBS_AUTO_SUBTITLE_YITUASR_H
 #include <QObject>
 #include <QString>
 #include <QWebSocket>
 #include <memory>
-#include "mssapi-captions/captions-mssapi.hpp"
+#include "yitu/SpeechRecognitionClient.h"
 #include "ASRBase.h"
 
-class MSSAPI : public ASRBase {
+class YiTuASR : public ASRBase {
 	Q_OBJECT
 public:
-	MSSAPI(const QString &lang, QObject *parent = nullptr);
-	~MSSAPI();
-	static void callback(MSSAPI *their, const std::string &result);
+	YiTuASR(const QString &devId, const QString &devKey, QObject *parent = nullptr);
+	~YiTuASR();
+	void setLang(QString _lang);
+    void setEnablePunc(bool enable);
+    void setEnableNOA(bool enable);
+
+	static void callback(YiTuASR *that, std::string result, bool isFinal);
 
 private slots:
 	void onSendAudioMessage(const char *, unsigned long);
@@ -38,8 +42,12 @@ private slots:
 	void onStop();
 
 private:
-	std::shared_ptr<mssapi_captions> mssapi;
-	const QString lang;
+	QString devId;
+    QString devKey;
+	QString lang = "";
+	bool punc = true;
+    bool noa = true;
+    std::unique_ptr<SpeechRecognitionClient> client;
 };
 
-#endif //OBS_AUTO_SUBTITLE_MSSAPI_H
+#endif //OBS_AUTO_SUBTITLE_YITUASR_H

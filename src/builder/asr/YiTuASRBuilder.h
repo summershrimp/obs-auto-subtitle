@@ -16,30 +16,34 @@ You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
 
-#ifndef OBS_AUTO_SUBTITLE_MSSAPI_H
-#define OBS_AUTO_SUBTITLE_MSSAPI_H
-#include <QObject>
+#ifndef OBS_AUTOSUB_YITUASR_BUILDER_H
+#define OBS_AUTOSUB_YITUASR_BUILDER_H
+
 #include <QString>
-#include <QWebSocket>
-#include <memory>
-#include "mssapi-captions/captions-mssapi.hpp"
-#include "ASRBase.h"
 
-class MSSAPI : public ASRBase {
-	Q_OBJECT
+#include "../base/ASRBuilderBase.h"
+#include "../../vendor/ASR/YiTuASR.h"
+
+class YiTuASRBuilder : public ASRBuilderBase {
 public:
-	MSSAPI(const QString &lang, QObject *parent = nullptr);
-	~MSSAPI();
-	static void callback(MSSAPI *their, const std::string &result);
+    void getProperties(obs_properties_t *props);
+    void showProperties(obs_properties_t *props);
+    void hideProperties(obs_properties_t *props);
+    void updateSettings(obs_data_t *settings);
+    void getDefaults(obs_data_t *settings);
+    ASRBase *build();
 
-private slots:
-	void onSendAudioMessage(const char *, unsigned long);
-	void onStart();
-	void onStop();
+protected:
 
 private:
-	std::shared_ptr<mssapi_captions> mssapi;
-	const QString lang;
+    QString devId;
+    QString devKey;
+    QString lang;
+    bool punc;
+    bool noa;
+    bool needBuild = false;
+
 };
 
-#endif //OBS_AUTO_SUBTITLE_MSSAPI_H
+
+#endif OBS_AUTOSUB_YITUASR_BUILDER_H
