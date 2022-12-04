@@ -152,4 +152,3 @@ ASRBase *MSSAPIBuilder::build(){
 
 static MSSAPIBuilder mssapiBuilder; 
 static ASRBuilderRegister register_mssapi_asr( &mssapiBuilder, MSSAPI_PROVIDER_ID, L_SP_MSSAPI);
-
