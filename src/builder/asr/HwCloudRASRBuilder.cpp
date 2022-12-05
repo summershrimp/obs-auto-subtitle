@@ -65,4 +65,4 @@ ASRBase *HwCloudRASRBuilder::build(){
 }
 
 static HwCloudRASRBuilder hwCloudRASRBuilder; 
-static BuilderRegister<ASRBase> register_hwcloud_asr(&ASRBuilders, &hwCloudRASRBuilder, HWCLOUD_PROVIDER_ID, L_SP_HWCLOUD);
+static ASRBuilderRegister register_hwcloud_asr(&hwCloudRASRBuilder, HWCLOUD_PROVIDER_ID, L_SP_HWCLOUD);

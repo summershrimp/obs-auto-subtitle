@@ -104,4 +104,4 @@ ASRBase *XFRtASRBuilder::build(){
 }
 
 static XFRtASRBuilder xfrtasrBuilder; 
-static BuilderRegister<ASRBase> register_xfrtasr_asr(&ASRBuilders, &xfrtasrBuilder, XFYUN_PROVIDER_ID, L_SP_XFYUN);
+static ASRBuilderRegister register_xfrtasr_asr( &xfrtasrBuilder, XFYUN_PROVIDER_ID, L_SP_XFYUN);

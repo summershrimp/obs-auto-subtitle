@@ -22,6 +22,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <obs.h>
 #include <obs-module.h>
 #include <map>
+#include <memory>
 
 #define T_TOKEN obs_module_text("AutoSub.Token")
 #define T_LANGUAGE obs_module_text("AutoSub.Language")
@@ -86,9 +87,12 @@ private:
 template<class T>
 class BuilderRegister {
 public:
-    BuilderRegister(BuilderHolder<T> *, PropBuilderBase<T> *, provider_id_t, const char* locale_label);
+    BuilderRegister(PropBuilderBase<T> *, provider_id_t, const char* locale_label);
+    static BuilderHolder<T> *builders;
 };
 
+template<class T>
+BuilderHolder<T> *BuilderRegister<T>::builders = nullptr;
 
 template<class T>
 const char *BuilderHolder<T>::getLocaleLabel(provider_id_t id) {
@@ -131,9 +135,12 @@ std::map<provider_id_t, PropBuilderBase<T>*> BuilderHolder<T>::getAllBuilder(){
 
 
 template<class T>
-BuilderRegister<T>::BuilderRegister(BuilderHolder<T> *holder, PropBuilderBase<T> *builder, provider_id_t id, const char* locale_label){
-    holder->addBuilder(id, builder);
-    holder->addLocaleLabel(id, locale_label);
+BuilderRegister<T>::BuilderRegister(PropBuilderBase<T> *builder, provider_id_t id, const char* locale_label){
+    if(!builders) {
+        builders = new BuilderHolder<T>();
+    }
+    builders->addBuilder(id, builder);
+    builders->addLocaleLabel(id, locale_label);
 }
 
 

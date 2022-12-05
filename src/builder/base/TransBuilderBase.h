@@ -42,6 +42,7 @@ struct LangList {
     const char *lang_t;
 };
 
-extern BuilderHolder<TransBase> TransBuilders;
+#define TransBuilders (*BuilderRegister<TransBase>::builders)
 
+typedef BuilderRegister<TransBase> TransBuilderRegister;
 #endif

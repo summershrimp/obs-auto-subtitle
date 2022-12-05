@@ -21,7 +21,6 @@ set(LINUX_MAINTAINER_EMAIL "xm1994@gmail.com")
 set(obs-auto-subtitle_SOURCES
     src/obs-auto-subtitle.cpp
     src/obs-autosub-filter.cpp
-    src/builder/base/PropBuilders.cpp
     src/builder/ASR/AliNLSBuilder.cpp
     src/builder/ASR/HwCloudRASRBuilder.cpp
     src/builder/ASR/XFRtASRBuilder.cpp

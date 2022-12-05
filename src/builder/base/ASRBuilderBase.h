@@ -37,7 +37,8 @@ protected:
 
 #define _PROP(name) "autosub_filter_asr_" # name
 
-extern BuilderHolder<ASRBase> ASRBuilders;
+#define ASRBuilders (*BuilderRegister<ASRBase>::builders)
 
+typedef BuilderRegister<ASRBase> ASRBuilderRegister;
 
 #endif

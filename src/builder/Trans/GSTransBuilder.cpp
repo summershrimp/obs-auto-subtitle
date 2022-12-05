@@ -93,4 +93,4 @@ TransBase *GSTransBuilder::build() {
 
 
 static GSTransBuilder gsTransBuilder; 
-static BuilderRegister<TransBase> register_gs(&TransBuilders, &gsTransBuilder, GS_TRANS_PROVIDER_ID, L_TRANS_SP_GSCRIPT);
+static TransBuilderRegister register_gs( &gsTransBuilder, GS_TRANS_PROVIDER_ID, L_TRANS_SP_GSCRIPT);
