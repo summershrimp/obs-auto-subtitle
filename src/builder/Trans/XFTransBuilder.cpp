@@ -116,7 +116,7 @@ TransBase *XFTransBuilder::build() {
 
 
 static XFTransBuilder xfTransBuilder(false); 
-static BuilderRegister<TransBase> register_xf_trans(&TransBuilders, &xfTransBuilder, XF_TRANS_PROVIDER_ID, L_TRANS_SP_XFYUN);
+static TransBuilderRegister register_xf_trans(&xfTransBuilder, XF_TRANS_PROVIDER_ID, L_TRANS_SP_XFYUN);
 
 static XFTransBuilder xfNiuTransBuilder(true); 
-static BuilderRegister<TransBase> register_xf_niu_trans(&TransBuilders, &xfNiuTransBuilder, XF_TRANS_NIU_PROVIDER_ID, L_TRANS_SP_XFNIU);
+static TransBuilderRegister register_xf_niu_trans(&xfNiuTransBuilder, XF_TRANS_NIU_PROVIDER_ID, L_TRANS_SP_XFNIU);

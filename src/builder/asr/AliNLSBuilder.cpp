@@ -99,4 +99,4 @@ ASRBase *AliNLSBuilder::build(){
 }
 
 static AliNLSBuilder aliNLSBuilder; 
-static BuilderRegister<ASRBase> register_Alinls_asr(&ASRBuilders, &aliNLSBuilder, ALINLS_PROVIDER_ID, L_SP_ALINLS);
+static ASRBuilderRegister register_Alinls_asr(&aliNLSBuilder, ALINLS_PROVIDER_ID, L_SP_ALINLS);

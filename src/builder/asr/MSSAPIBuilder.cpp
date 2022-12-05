@@ -151,5 +151,5 @@ ASRBase *MSSAPIBuilder::build(){
 }
 
 static MSSAPIBuilder mssapiBuilder; 
-static BuilderRegister<ASRBase> register_hwcloud_asr(&ASRBuilders, &mssapiBuilder, MSSAPI_PROVIDER_ID, L_SP_MSSAPI);
+static ASRBuilderRegister register_mssapi_asr( &mssapiBuilder, MSSAPI_PROVIDER_ID, L_SP_MSSAPI);
 
