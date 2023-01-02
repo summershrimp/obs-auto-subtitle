@@ -35,7 +35,7 @@ protected:
     QString toLang;
 };
 
-#define _PROP(name) "autosub_filter_trans_" # name
+#define _PROP(name) "autosub_filter_trans_" name
 
 struct LangList {
     const char *lang_id;
