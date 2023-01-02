@@ -35,7 +35,7 @@ protected:
     QString toLang;
 };
 
-#define _PROP(name) "autosub_filter_asr_" # name
+#define _PROP(name) "autosub_filter_asr_" name
 
 #define ASRBuilders (*BuilderRegister<ASRBase>::builders)
 

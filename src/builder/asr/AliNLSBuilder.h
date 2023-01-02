@@ -20,9 +20,12 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define OBS_AUTOSUB_ALINLS_BUILDER_H
 
 #include <QString>
+#include <QNetworkAccessManager>
 
 #include "../base/ASRBuilderBase.h"
 #include "../../vendor/ASR/AliNLS.h"
+
+#define ALINLS_TOKEN_META "https://nls-meta.cn-shanghai.aliyuncs.com"
 
 class AliNLSBuilder : public ASRBuilderBase {
 public:
@@ -36,12 +39,16 @@ public:
 protected:
 
 private:
+    void refreshToken();
+    QString access_key;
+    QString secret;
     QString appkey;
     QString token;
     bool punc;
     bool itn;
     bool inter_result;
     bool needBuild = false;
+    bool needRefresh = false;
 
 };
 

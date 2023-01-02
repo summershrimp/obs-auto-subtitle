@@ -24,7 +24,11 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <map>
 #include <memory>
 
+#include <plugin-macros.generated.h>
+
 #define T_TOKEN obs_module_text("AutoSub.Token")
+#define T_ACCEESSKEY obs_module_text("AutoSub.AccessKey")
+#define T_SECRET obs_module_text("AutoSub.Secret")
 #define T_LANGUAGE obs_module_text("AutoSub.Language")
 
 template<class T>

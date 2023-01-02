@@ -265,13 +265,14 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 	ASRBuilderBase *asrBuilder =
 		static_cast<ASRBuilderBase *>(ASRBuilders.getBuilder(provider));
 	std::shared_ptr<ASRBase> new_asr;
-	s->lock_asr.lock();
 	if (asrBuilder) {
 		asrBuilder->updateSettings(settings);
 		new_asr.reset(asrBuilder->build());
-		if (new_asr) {
-			s->asr = new_asr;
-		}
+	}
+	// Must updateSettings first then lock asr !
+	s->lock_asr.lock();
+	if (new_asr) {
+		s->asr = new_asr;
 	}
 
 	std::function<void(QString)> setText([=](QString str) {

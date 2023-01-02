@@ -15,6 +15,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
+#include <QCryptographicHash>
+#include <QMessageAuthenticationCode>
+#include <QUrl>
+#include <QUrlQuery>
+#include <QUuid>
+#include <QEventLoop>
+#include <QObject>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QDebug>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+
 #include "AliNLSBuilder.h"
 
 #define ALINLS_PROVIDER_ID 0x0001U
@@ -23,7 +36,8 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define PROP_ALINLS_APPKEY "autosub_filter_alinls_appkey"
 #define T_APPKEY obs_module_text("AutoSub.AppKey")
 
-#define PROP_ALINLS_TOKEN "autosub_filter_alinls_token"
+#define PROP_ALINLS_AK "autosub_filter_alinls_accesskey"
+#define PROP_ALINLS_SK "autosub_filter_alinls_secret"
 
 #define PROP_ALINLS_PUNC "autosub_filter_alinls_punc"
 #define T_ALINLS_PUNC obs_module_text("AutoSub.AliNLS.Punc")
@@ -35,7 +49,9 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 void AliNLSBuilder::getProperties(obs_properties_t *props){
     obs_properties_add_text(props, PROP_ALINLS_APPKEY, T_APPKEY,
 			    OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, PROP_ALINLS_TOKEN, T_TOKEN,
+	obs_properties_add_text(props, PROP_ALINLS_AK, T_ACCEESSKEY,
+			    OBS_TEXT_DEFAULT);
+    obs_properties_add_text(props, PROP_ALINLS_SK, T_SECRET,
 			    OBS_TEXT_DEFAULT);
 	obs_properties_add_bool(props, PROP_ALINLS_PUNC, T_ALINLS_PUNC);
 	obs_properties_add_bool(props, PROP_ALINLS_ITN, T_ALINLS_ITN);
@@ -45,7 +61,8 @@ void AliNLSBuilder::getProperties(obs_properties_t *props){
 
 void AliNLSBuilder::showProperties(obs_properties_t *props){
     PROPERTY_SET_VISIBLE(props, PROP_ALINLS_APPKEY);
-    PROPERTY_SET_VISIBLE(props, PROP_ALINLS_TOKEN);
+    PROPERTY_SET_VISIBLE(props, PROP_ALINLS_AK);
+    PROPERTY_SET_VISIBLE(props, PROP_ALINLS_SK);
     PROPERTY_SET_VISIBLE(props, PROP_ALINLS_PUNC);
     PROPERTY_SET_VISIBLE(props, PROP_ALINLS_ITN);
     PROPERTY_SET_VISIBLE(props, PROP_ALINLS_INTRESULT);
@@ -53,7 +70,8 @@ void AliNLSBuilder::showProperties(obs_properties_t *props){
 
 void AliNLSBuilder::hideProperties(obs_properties_t *props){
 	PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_APPKEY);
-	PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_TOKEN);
+	PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_AK);
+    PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_SK);
 	PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_PUNC);
 	PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_ITN);
 	PROPERTY_SET_UNVISIBLE(props, PROP_ALINLS_INTRESULT);
@@ -61,14 +79,16 @@ void AliNLSBuilder::hideProperties(obs_properties_t *props){
 
 void AliNLSBuilder::updateSettings(obs_data_t *settings){
     QString _appkey = obs_data_get_string(settings, PROP_ALINLS_APPKEY);
-    QString _token = obs_data_get_string(settings, PROP_ALINLS_TOKEN);
+    QString _ak = obs_data_get_string(settings, PROP_ALINLS_AK);
+    QString _sk = obs_data_get_string(settings, PROP_ALINLS_SK);
     bool _punc = obs_data_get_bool(settings, PROP_ALINLS_PUNC);
     bool _itn = obs_data_get_bool(settings, PROP_ALINLS_ITN);
     bool _inter_result =
         obs_data_get_bool(settings, PROP_ALINLS_INTRESULT);
 
+    CHECK_CHANGE_SET_ALL(this->access_key, _ak, needRefresh);
+    CHECK_CHANGE_SET_ALL(this->secret, _sk, needRefresh);
     CHECK_CHANGE_SET_ALL(this->appkey, _appkey, needBuild);
-    CHECK_CHANGE_SET_ALL(this->token, _token, needBuild);
     CHECK_CHANGE_SET_ALL(this->punc, _punc, needBuild);
     CHECK_CHANGE_SET_ALL(this->itn, _itn, needBuild);
     CHECK_CHANGE_SET_ALL(this->inter_result, _inter_result, needBuild);
@@ -78,11 +98,74 @@ void AliNLSBuilder::getDefaults(obs_data_t *settings){
     (void) settings;
 }
 
+void AliNLSBuilder::refreshToken(){
+
+    if(access_key.isEmpty() || secret.isEmpty()){
+        return;
+    }
+
+    QUrl meta(ALINLS_TOKEN_META);
+    QUrlQuery query;
+    query.addQueryItem("AccessKeyId", access_key);
+    query.addQueryItem("Action", "CreateToken");
+    query.addQueryItem("Format", "JSON");
+    query.addQueryItem("RegionId", "cn-shanghai");
+    query.addQueryItem("SignatureMethod", "HMAC-SHA1");
+    query.addQueryItem("SignatureNonce", QUuid::createUuid().toString(QUuid::WithoutBraces));
+    query.addQueryItem("SignatureVersion", "1.0");
+    query.addQueryItem("Timestamp", QDateTime::currentDateTimeUtc().toString("yyyy-MM-ddThh:mm:ssZ").replace(":", "%3A"));
+    query.addQueryItem("Version", "2019-02-28");
+
+
+    QString querystr = query.query(QUrl::FullyEncoded);
+    querystr = "GET&%2F&" + QUrl::toPercentEncoding(querystr);;
+
+    QString key = secret + "&";
+
+    QString signature = QMessageAuthenticationCode::hash(querystr.toLatin1(),
+						 key.toLocal8Bit(),
+						 QCryptographicHash::Sha1).toBase64();
+    
+    query.addQueryItem("Signature", signature);
+
+    meta.setQuery(query);
+
+    QNetworkRequest request(meta);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setTransferTimeout(6000);
+    QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+    QEventLoop loop;
+    QNetworkReply *reply = networkManager->sendCustomRequest(request, "GET", QByteArray());
+    QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+    if(reply->error() != QNetworkReply::NoError){
+        blog(LOG_WARNING, "network error: %s", reply->errorString().toStdString().c_str());
+        return;
+    }
+    if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() != 200){
+        blog(LOG_WARNING, "http error: %d, %s", reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(),
+            reply->readAll().toStdString().c_str());
+        return;
+    }
+
+    QJsonObject jsonObject = QJsonDocument::fromJson(reply->readAll()).object();
+    token = jsonObject.find("Token").value().toObject().find("Id").value().toString();
+    qDebug() <<"Token:" << token;
+    needRefresh = false;
+}
+
 ASRBase *AliNLSBuilder::build(){
-    if(!needBuild) {
+    if(!needBuild && !needRefresh){
         return nullptr;
     }
+    if(needRefresh){
+        token = "";
+        refreshToken();
+    }
     needBuild = false;
+    if(token.isEmpty()) {
+        return nullptr;
+    }
     auto asr = new AliNLS(appkey, token);
     if (punc) {
         asr->setParam("enable_punctuation_prediction",
