@@ -133,9 +133,9 @@ void AliNLSBuilder::refreshToken(){
     QNetworkRequest request(meta);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setTransferTimeout(6000);
-    QNetworkAccessManager *networkManager = new QNetworkAccessManager();
+    QNetworkAccessManager networkManager;
     QEventLoop loop;
-    QNetworkReply *reply = networkManager->sendCustomRequest(request, "GET", QByteArray());
+    QNetworkReply *reply = networkManager.get(request);
     QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
     loop.exec();
     if(reply->error() != QNetworkReply::NoError){

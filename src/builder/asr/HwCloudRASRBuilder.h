@@ -24,6 +24,8 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include "../base/ASRBuilderBase.h"
 #include "../../vendor/ASR/HwCloudRASR.h"
 
+#define HWCLOUD_IAM_TOKEN_API "https://iam.%1.myhuaweicloud.com/v3/auth/tokens"
+
 class HwCloudRASRBuilder : public ASRBuilderBase {
 public:
     void getProperties(obs_properties_t *props);
@@ -36,9 +38,17 @@ public:
 protected:
 
 private:
+    void refreshToken();
+
     QString project_id;
+    QString region;
+    QString username;
+    QString password;
+    QString domain_name;
     QString token;
+
     bool needBuild = false;
+    bool needRefresh = false;
 };
 
 

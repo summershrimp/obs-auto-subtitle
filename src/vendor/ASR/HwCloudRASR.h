@@ -25,14 +25,14 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #include "ASRBase.h"
 
-#define HWCLOUD_SIS_ENDPOINT "sis-ext.cn-north-4.myhuaweicloud.com"
+#define HWCLOUD_SIS_ENDPOINT "sis-ext.%1.myhuaweicloud.com"
 #define HWCLOUD_SIS_RASR_URI "/v1/%1/rasr/continue-stream"
 
 class HwCloudRASR : public ASRBase {
 	Q_OBJECT
 public:
-	HwCloudRASR(const QString &project_id, const QString &token,
-		    QObject *parent = nullptr);
+	HwCloudRASR(const QString &region, const QString &project_id,
+		    const QString &token, QObject *parent = nullptr);
 	QString getProjectId();
 	QString getToken();
 
@@ -54,6 +54,7 @@ private slots:
 
 private:
 	QString project_id;
+	QString region;
 	QString token;
 	QWebSocket ws;
 	bool running;

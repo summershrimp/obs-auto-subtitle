@@ -31,9 +31,9 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 using namespace std::placeholders;
 
-HwCloudRASR::HwCloudRASR(const QString &project_id, const QString &token,
-			 QObject *parent)
-	: ASRBase(parent), project_id(project_id), token(token)
+HwCloudRASR::HwCloudRASR(const QString &region, const QString &project_id,
+			 const QString &token, QObject *parent)
+	: ASRBase(parent), region(region), project_id(project_id), token(token)
 {
 	connect(&ws, &QWebSocket::connected, this, &HwCloudRASR::onConnected);
 	connect(&ws, &QWebSocket::disconnected, this,
@@ -68,7 +68,8 @@ void HwCloudRASR::onStart()
 {
 	auto uri = QString(HWCLOUD_SIS_RASR_URI).arg(project_id);
 	QNetworkRequest request;
-	auto urlStr = QString("wss://") + HWCLOUD_SIS_ENDPOINT + uri;
+	auto urlStr = QString("wss://") +
+		      QString(HWCLOUD_SIS_ENDPOINT).arg(region) + uri;
 	QUrl url(urlStr);
 	qDebug() << url.toString();
 	request.setUrl(url);
