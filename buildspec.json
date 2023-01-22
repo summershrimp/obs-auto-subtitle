@@ -1,53 +1,53 @@
 {
     "dependencies": {
         "obs-studio": {
-            "version": "28.0.2",
+            "version": "29.0.0",
             "repository": "https://github.com/obsproject/obs-studio.git",
-            "branch": "28.0.2",
-            "hash": "087ee39e2d8b9240b2ada1492fc7ad85102084ab"
+            "branch": "29.0.0",
+            "hash": "b51773b97b551cb409603146a97b2827d2a66ec3"
         },
         "prebuilt": {
-            "version": "2022-11-24",
+            "version": "2023-01-22",
             "baseUrl": "https://github.com/summershrimp/obs-deps/releases/download",
             "label": "Pre-built obs-deps",
             "hashes": {
-                "macos-x86_64": "1a00e2588618edff181928990d3fd243382fc579dd11a0ca295af4f174c14f00",
-                "macos-arm64": "bcc04acf5dd1e529cf026a43d3f36bc438e2f4246c490bbc9f3a46ec3352ac66",
-                "macos-universal": "5f58bc8561b47f996eab56bccc12f7c48a3661806c861926a90af7170e4cc17f",
-                "windows-x64": "a2dde7c8c393445e27304f122f8164f1a34d1e1e1ab9139c3cfb88a059b9ecd6",
-                "windows-x86": "dddcfaf33e97a34afc67a418eeef224c4eb1e6d1c2cd8b08be9119f06d859fbc"
+                "macos-x86_64": "d7597665261c45e81c2780d6127ae6578428b914b4c862deeebda489d2ee20f9",
+                "macos-arm64": "29cf7574bb9e6d04bc612b5d2a09a3e3c876eab2f1aa0f0c439ec553f6b8f074",
+                "macos-universal": "9b908297bc9fe3f764a8943d583bd44c589fd9ff38f32f94c5a60fd95710d1f7",
+                "windows-x64": "8aad11356ef0ea608c07d170bac4dfba1da4ae71e7291a8bcfd22aeb000ed5e6",
+                "windows-x86": "a53da059f697d07aa01c85263294b2a68bf092e44248a533986cff8909c0752c"
             }
         },
         "qt5": {
-            "version": "2022-11-24",
+            "version": "2023-01-22",
             "baseUrl": "https://github.com/summershrimp/obs-deps/releases/download",
             "label": "Pre-built Qt5",
             "hashes": {
-                "macos-x86_64": "10df9af7ae864f49d3a2448b35a84f6d9f27463f5cda46e04993b6d385d8ba5a",
-                "macos-arm64": "22f5d4c5e66652677f097ae4b20826913798ba96013300d5331a7f403c6498f3",
-                "macos-universal": "37cc5b1c7d7487901c3b3583e64365b9fa49c1549f82dd28c4e4f48e82483af7",
-                "windows-x64": "fdf4fcbc68d6e6ca09150a9bc29c5fd4c2534ba471092b5fb870e73655491798",
-                "windows-x86": "f400a99291a9fba5036442842301e729f86eb1e41d3fdc93d7eb2477f0a5db23"
+                "macos-x86_64": "79a0baf7e0ea2ec1ec7000efc5082a095966c8e1a06806884b691b79be1b6949",
+                "macos-arm64": "23e0cb299b36414447fc903dceb3b893b0b1b1e5dedca3629ca03d50d25aa137",
+                "macos-universal": "b12ec3d7dffba2d3618e12546a6d9098173c5fb2cf0b50ded7cb936a7175e060",
+                "windows-x64": "b2077dadf49350968778c41bf6551d61721e1de1192656c32f3d514c1d874cab",
+                "windows-x86": "b981a9929ba209de82644b6b6e07f6773332ad0b0eb2763dd3a1cec17883a9e0"
             },
             "pdb-hashes": {
-                "windows-x64": "488bf025789763f57f43349f2e0842f0237b89e4851c6c0872d002c5ec820d59",
-                "windows-x86": "a83c4c976242d57a4b3cbc9f5aedc78d7dffb338e70b212218235fbdd97f8b0d"
+                "windows-x64": "27fba1f4b99f5156be092b6820b3a70f1d82c6842cae24cc1df1fa115cdec1e5",
+                "windows-x86": "2a48debe9e2d8d8c32772b46cc00fa21e1982772dc7295b52b1b55c2fb0afe1b"
             }
         },
         "qt6": {
-            "version": "2022-11-24",
+            "version": "2023-01-22",
             "baseUrl": "https://github.com/summershrimp/obs-deps/releases/download",
             "label": "Pre-built Qt6",
             "hashes": {
-                "macos-x86_64": "b77aa6d5d5ad6909aca0ee9550d575fe9bf36e1d565f5e33475084e20ee6adf7",
-                "macos-arm64": "eaf17c1a5ecff7be11cd31954351b05721215dfaded0a10ef6f8dc2557e76650",
-                "macos-universal": "ecbec0535af8271259b06a4b334866e5a9e00f04a73a84c07519e84c52bfa904",
-                "windows-x64": "10cb15aba9337a5c767f866bdfc760c0794c737e78b93a90fc2ee7f522171ef7",
-                "windows-x86": "4db9d9e4ce7b2d4f2dbba58552d40e1bb11279f2c8e99c68472ea55607101e11"
+                "macos-x86_64": "f9393fda169ab637c7a9525b97ef29b72dd2c05e58d2fff530f02ccde9d31bd3",
+                "macos-arm64": "bf17060835f8fd654d67acc0a2a0460546d418890b579787c8a930b5f9f9d3c7",
+                "macos-universal": "3b652267b4d37075f14e60df07965d085d75969b2b74fb4b02610c6f8cf8e4b9",
+                "windows-x64": "2a1b74abe58c234002cd20879ebcbe792936577e5a3a8b979610c10302685b09",
+                "windows-x86": "d4a8325f64414c762a75f9cad65d4800f2149c2837b6a1516a3e74ef26fe3560"
             },
             "pdb-hashes": {
-                "windows-x64": "9d6fe32dd4f7ca24947fe30e43f618052efba19b7c9f291a6b93f75ed3d44464",
-                "windows-x86": "cdad12d133cf0af6a7e304526e3ea18c2d4a20104a8d401fdfceb56ef833108f"
+                "windows-x64": "9e621185ef54042a3b395dd5511bd99a5fc3d22374759910eb290e6f96fccd9a",
+                "windows-x86": "892bd078ae37ca31852e6232564afe84045811922b6c29dd4aaded0d4397a292"
             }
         }
     },
@@ -82,5 +82,5 @@
         }
     },
     "name": "obs-auto-subtitle",
-    "version": "0.4.2"
+    "version": "0.5.0"
 }
