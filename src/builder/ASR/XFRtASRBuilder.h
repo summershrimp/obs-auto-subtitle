@@ -22,7 +22,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <QString>
 
 #include "../base/ASRBuilderBase.h"
-#include "../../vendor/ASR/XfRtASR.h"
+#include "../../vendor/ASR/XFRtASR.h"
 
 class XFRtASRBuilder : public ASRBuilderBase {
 public:
