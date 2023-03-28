@@ -21,8 +21,10 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #include <QString>
 
-#include "../base/TransBuilderBase.h"
+// Hint: Must include this first!
+// https://github.com/simd-everywhere/simde/issues/459
 #include "../../vendor/Trans/XFTrans.h"
+#include "../base/TransBuilderBase.h"
 
 class XFTransBuilder : public TransBuilderBase {
 public:

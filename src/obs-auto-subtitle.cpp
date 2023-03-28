@@ -15,11 +15,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
-#include <obs-module.h>
-#include <util/platform.h>
 #include <QCoreApplication>
 #include <QDir>
 #include <QtGlobal>
+#include <obs-module.h>
+#include <util/platform.h>
 #include "obs-auto-subtitle.h"
 
 #if defined(__APPLE__)

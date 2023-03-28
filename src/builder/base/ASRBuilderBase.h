@@ -19,8 +19,10 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #ifndef OBS_AUTOSUB_ASR_BUILDER_BASE_H
 #define OBS_AUTOSUB_ASR_BUILDER_BASE_H
 
-#include "PropBuilderBase.h"
+// Hint: must include this first!
+// https://github.com/simd-everywhere/simde/issues/459
 #include "../../vendor/ASR/ASRBase.h"
+#include "PropBuilderBase.h"
 
 class ASRBuilderBase: public PropBuilderBase<ASRBase> { 
 public:

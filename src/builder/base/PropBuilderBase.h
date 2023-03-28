@@ -19,7 +19,6 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #ifndef OBS_AUTOSUB_PROP_BUILDER_BASE_H
 #define OBS_AUTOSUB_PROP_BUILDER_BASE_H
 
-#include <obs.h>
 #include <obs-module.h>
 #include <map>
 #include <memory>

@@ -20,9 +20,10 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define OBS_AUTOSUB_GSTRANS_BUILDER_H
 
 #include <QString>
-
-#include "../base/TransBuilderBase.h"
+// Hint: Must include this first!
+// https://github.com/simd-everywhere/simde/issues/459
 #include "../../vendor/Trans/GScriptTrans.h"
+#include "../base/TransBuilderBase.h"
 
 class GSTransBuilder : public TransBuilderBase {
 public:
