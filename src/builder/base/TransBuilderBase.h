@@ -19,8 +19,10 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #ifndef OBS_AUTOSUB_TRANS_BUILDER_BASE_H
 #define OBS_AUTOSUB_TRANS_BUILDER_BASE_H
 
-#include "PropBuilderBase.h"
+// Hint: must include this first!
+// https://github.com/simd-everywhere/simde/issues/459
 #include "../../vendor/Trans/TransBase.h"
+#include "PropBuilderBase.h"
 
 class TransBuilderBase: public PropBuilderBase<TransBase> { 
 public:

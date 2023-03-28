@@ -20,12 +20,11 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <functional>
 #include <memory>
 #include <QObject>
+#include <QThread>
 #include <obs-module.h>
-#include <obs.h>
 #include <util/threading.h>
 #include <util/platform.h>
 #include <chrono>
-#include <QThread>
 #include <media-io/audio-resampler.h>
 
 #include "obs-auto-subtitle.h"
