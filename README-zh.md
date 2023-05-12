@@ -38,13 +38,14 @@ https://console.xfyun.cn/services/rta
 ![](./images/xfyun-rtasr.png)
 
 ### 阿里云参数
-登陆阿里云，完成身份验证和服务开通，应购买**智能语音交互**服务。随后在控制台页面新建项目，并生成Token。Token有效期较短，一般为一天，请每次使用是重新生成。
+登陆阿里云，完成身份验证和服务开通，应购买**智能语音交互**服务。随后在控制台页面新建项目
 https://nls-portal.console.aliyun.com/overview
-
-![](./images/aliyun-nls-token.png)
 
 ![](./images/aliyun-nls-appkey.png)
 
+AccessKey 和 Secret 的生成请阅读
+
+https://help.aliyun.com/document_detail/116401.htm
 
 ## 交流群
 
