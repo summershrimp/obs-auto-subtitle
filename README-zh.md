@@ -47,6 +47,16 @@ AccessKey 和 Secret 的生成请阅读
 
 https://help.aliyun.com/document_detail/116401.htm
 
+### 华为云参数
+登录华为云，完成身份验证和服务开通
+https://www.huaweicloud.com/product/rasr.html
+
+项目ID请参考以下链接
+https://support.huaweicloud.com/api-iam/iam_17_0002.html
+
+鉴权参数的获取请参考以下链接的 “Token认证” 部分
+https://support.huaweicloud.com/sis_faq/sis_04_0077.html
+
 ## 交流群
 
 Discord(仅英文): https://discord.gg/uFpTbh3AVC
