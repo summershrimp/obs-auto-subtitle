@@ -67,6 +67,8 @@ function Build {
     if ( ! ( ( $SkipAll ) -or ( $SkipBuild ) ) ) {
         Ensure-Location $ProjectRoot
 
+        Invoke-External conan install . -s "build_type=Release" -s "&:build_type=${Configuration}" -of "build_${script:Target}" --deployer full_deploy
+
         $DepsPath = "plugin-deps-${script:DepsVersion}-qt${script:QtVersion}-${script:Target}"
         $CmakeArgs = @(
             '-G', $CmakeGenerator
@@ -74,6 +76,7 @@ function Build {
             "-DCMAKE_GENERATOR_PLATFORM=$(if (${script:Target} -eq "x86") { "Win32" } else { "x64" })"
             "-DCMAKE_BUILD_TYPE=${Configuration}"
             "-DCMAKE_PREFIX_PATH:PATH=$(Resolve-Path -Path "${ProjectRoot}/../obs-build-dependencies/${DepsPath}")"
+            "-DCMAKE_TOOLCHAIN_FILE=$(Resolve-Path -Path "${ProjectRoot}/build_${script:Target}/build/generators/conan_toolchain.cmake")"
             "-DQT_VERSION=${script:QtVersion}"
         )
 

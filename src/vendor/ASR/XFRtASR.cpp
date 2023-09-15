@@ -36,13 +36,12 @@ using namespace std::placeholders;
 XFRtASR::XFRtASR(const QString &appId, const QString &apiKey, QObject *parent)
 	: ASRBase(parent), appId(appId), apiKey(apiKey)
 {
-	connect(&ws, &QWebSocket::connected, this, &XFRtASR::onConnected);
-	connect(&ws, &QWebSocket::disconnected, this, &XFRtASR::onDisconnected);
-	connect(&ws, &QWebSocket::textMessageReceived, this,
+	connect(&ws, &QWebsocketpp::connected, this, &XFRtASR::onConnected);
+	connect(&ws, &QWebsocketpp::disconnected, this, &XFRtASR::onDisconnected);
+	connect(&ws, &QWebsocketpp::textMessageReceived, this,
 		&XFRtASR::onTextMessageReceived);
 	connect(this, &XFRtASR::haveResult, this, &XFRtASR::onResult);
-	connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this,
-		SLOT(onError(QAbstractSocket::SocketError)));
+	connect(&ws, &QWebsocketpp::errorOccurred, this, &XFRtASR::onError);
 
 	running = false;
 }

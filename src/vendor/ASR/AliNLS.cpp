@@ -33,13 +33,12 @@ using namespace std::placeholders;
 AliNLS::AliNLS(const QString &appKey, const QString &token, QObject *parent)
 	: ASRBase(parent), appKey(appKey), token(token)
 {
-	connect(&ws, &QWebSocket::connected, this, &AliNLS::onConnected);
-	connect(&ws, &QWebSocket::disconnected, this, &AliNLS::onDisconnected);
-	connect(&ws, &QWebSocket::textMessageReceived, this,
+	connect(&ws, &QWebsocketpp::connected, this, &AliNLS::onConnected);
+	connect(&ws, &QWebsocketpp::disconnected, this, &AliNLS::onDisconnected);
+	connect(&ws, &QWebsocketpp::textMessageReceived, this,
 		&AliNLS::onTextMessageReceived);
 	connect(this, &AliNLS::haveResult, this, &AliNLS::onResult);
-	connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this,
-		SLOT(onError(QAbstractSocket::SocketError)));
+	connect(&ws, &QWebsocketpp::errorOccurred, this, &AliNLS::onError);
 	task_id = QUuid::createUuid().toRfc4122().toHex();
 	_header["task_id"] = task_id;
 	_header["namespace"] = "SpeechTranscriber";

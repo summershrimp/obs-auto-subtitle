@@ -20,7 +20,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define OBS_AUTO_SUBTITLE_HW_RASR_H
 #include <QObject>
 #include <QString>
-#include <QWebSocket>
+#include <QWebsocketpp>
 #include <memory>
 
 #include "ASRBase.h"
@@ -56,7 +56,7 @@ private:
 	QString project_id;
 	QString region;
 	QString token;
-	QWebSocket ws;
+	QWebsocketpp ws;
 	bool running;
 };
 

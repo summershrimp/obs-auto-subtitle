@@ -21,7 +21,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <QObject>
 #include <QMap>
 #include <QString>
-#include <QWebSocket>
+#include <QWebsocketpp>
 #include <memory>
 
 #include "ASRBase.h"
@@ -56,7 +56,7 @@ private slots:
 private:
 	QString appKey;
 	QString token;
-	QWebSocket ws;
+	QWebsocketpp ws;
 	bool running;
 	QHash<QString, QString> _header;
 	QHash<QString, QJsonValue> _payload;

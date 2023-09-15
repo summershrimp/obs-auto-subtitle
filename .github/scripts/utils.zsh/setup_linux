@@ -30,7 +30,9 @@ if (( ! (${skips[(Ie)all]} + ${skips[(Ie)deps]}) )) {
     libx11-xcb-dev \
     libgles2-mesa-dev \
     libwayland-dev \
-    libpulse-dev
+    libpulse-dev \
+    libwebsocketpp-dev \
+    libasio-dev
 
   local -a _qt_packages=()
 

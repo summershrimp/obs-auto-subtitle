@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16...3.21)
 
 # Change obs-plugintemplate to your plugin's name in a machine-readable format (e.g.:
 # obs-myawesomeplugin) and set
-project(obs-auto-subtitle VERSION 1.0.0)
+project(obs-auto-subtitle VERSION 0.6.0)
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
 # Replace `Your Name Here` with the name (yours or your organization's) you want to see as the
@@ -21,6 +21,7 @@ set(LINUX_MAINTAINER_EMAIL "xm1994@gmail.com")
 set(obs-auto-subtitle_SOURCES
     src/obs-auto-subtitle.cpp
     src/obs-autosub-filter.cpp
+    src/util/QWebsocketpp/QWebsocketpp.cpp
     src/builder/ASR/AliNLSBuilder.cpp
     src/builder/ASR/HwCloudRASRBuilder.cpp
     src/builder/ASR/XFRtASRBuilder.cpp
@@ -61,7 +62,28 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
 # Uncomment those lines if you want to use Qt in your plugin
 
 find_qt(COMPONENTS Widgets Core Network WebSockets)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt::Core Qt::Widgets Qt::Network Qt::WebSockets)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
+
+# Find WebSocket++
+find_package(Websocketpp REQUIRED)
+
+# Find Asio
+find_package(Asio REQUIRED)
+
+# Find OpenSSL
+#set(OPENSSL_USE_STATIC_LIBS TRUE)
+find_package(OpenSSL REQUIRED)
+find_package(CURL REQUIRED)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE 
+  Qt::Core
+  Qt::Widgets
+  Qt::Network
+  OpenSSL::Crypto
+  OpenSSL::SSL
+  CURL::libcurl)
+
 set_target_properties(
   ${CMAKE_PROJECT_NAME}
   PROPERTIES AUTOMOC ON
@@ -76,10 +98,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-macros.generated.h)
 
 # --- Platform-independent build settings ---
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/util/QWebsocketpp)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ASIO_STANDALONE)
 # --- End of section ---
 
 # --- Windows-specific build settings and tasks ---

@@ -20,7 +20,6 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define OBS_AUTO_SUBTITLE_MSSAPI_H
 #include <QObject>
 #include <QString>
-#include <QWebSocket>
 #include <memory>
 #include "mssapi-captions/captions-mssapi.hpp"
 #include "ASRBase.h"
