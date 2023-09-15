@@ -20,7 +20,8 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define OBS_AUTO_SUBTITLE_XFRTASR_H
 #include <QObject>
 #include <QString>
-#include <QWebSocket>
+#include <QWebsocketpp>
+#include <QAbstractSocket>
 #include <memory>
 
 #include "ASRBase.h"
@@ -55,7 +56,7 @@ private slots:
 private:
 	QString appId;
 	QString apiKey;
-	QWebSocket ws;
+	QWebsocketpp ws;
 	bool running;
 	QUrl buildQuery();
 };

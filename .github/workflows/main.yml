@@ -75,6 +75,14 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: Install Conan
+        uses: turtlebrowser/get-conan@main
+        with:
+          version: 2.0.14
+
+      - name: Conan default profile
+        run: conan profile detect
+
       - name: Setup Environment
         id: setup
         working-directory: ${{ github.workspace }}/plugin
@@ -201,6 +209,14 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: Install Conan
+        uses: turtlebrowser/get-conan@main
+        with:
+          version: 2.0.14
+
+      - name: Conan default profile
+        run: conan profile detect
+
       - name: Setup Environment
         working-directory: ${{ github.workspace }}/plugin
         id: setup
@@ -278,6 +294,14 @@ jobs:
           path: obs-studio
           fetch-depth: 0
           submodules: recursive
+
+      - name: Install Conan
+        uses: turtlebrowser/get-conan@main
+        with:
+          version: 2.0.14
+
+      - name: Conan default profile
+        run: conan profile detect
 
       - name: Setup Environment
         working-directory: ${{ github.workspace }}/plugin

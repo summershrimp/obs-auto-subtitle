@@ -33,9 +33,9 @@ using namespace std::placeholders;
 FunASR::FunASR(const QString &endpoint, QObject *parent)
 	: ASRBase(parent), endpoint(endpoint)
 {
-	connect(&ws, &QWebSocket::connected, this, &FunASR::onConnected);
-	connect(&ws, &QWebSocket::disconnected, this, &FunASR::onDisconnected);
-	connect(&ws, &QWebSocket::textMessageReceived, this,
+	connect(&ws, &QWebsocketpp::connected, this, &FunASR::onConnected);
+	connect(&ws, &QWebsocketpp::disconnected, this, &FunASR::onDisconnected);
+	connect(&ws, &QWebsocketpp::textMessageReceived, this,
 		&FunASR::onTextMessageReceived);
 	connect(this, &FunASR::haveResult, this, &FunASR::onResult);
 	connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this,

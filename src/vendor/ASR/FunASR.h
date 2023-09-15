@@ -21,7 +21,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <QObject>
 #include <QMap>
 #include <QString>
-#include <QWebSocket>
+#include <QWebsocketpp>
 #include <memory>
 
 #include "ASRBase.h"
@@ -50,7 +50,7 @@ private slots:
 private:
 	QString endpoint;
 	QString middleResult;
-	QWebSocket ws;
+	QWebsocketpp ws;
 	bool running;
 };
 

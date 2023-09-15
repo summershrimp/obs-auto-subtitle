@@ -11,3 +11,6 @@
 # ignore generated files
 *.generated.*
 **/.Brewfile.lock.json
+
+CMakeUserPresets.json
+build/generated/

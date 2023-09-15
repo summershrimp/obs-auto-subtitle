@@ -191,11 +191,15 @@ Usage: %B${functrace[1]%:*}%b <option> [<options>]
   if (( ! (${skips[(Ie)all]} + ${skips[(Ie)build]}) )) {
     log_info "Configuring ${product_name}..."
 
+    conan install . -s "build_type=Release" -s "&:build_type=${BUILD_CONFIG:-RelWithDebInfo}" \
+         -of "build_${target##*-}" --deployer full_deploy
+
     local _plugin_deps="${project_root:h}/obs-build-dependencies/plugin-deps-${OBS_DEPS_VERSION}-qt${QT_VERSION}-${target##*-}"
     local -a cmake_args=(
       -DCMAKE_BUILD_TYPE=${BUILD_CONFIG:-RelWithDebInfo}
       -DQT_VERSION=${QT_VERSION}
       -DCMAKE_PREFIX_PATH="${_plugin_deps}"
+      -DCMAKE_TOOLCHAIN_FILE="build_${target##*-}/build/${BUILD_CONFIG:-RelWithDebInfo}/generators/conan_toolchain.cmake"
     )
 
     if (( _loglevel == 0 )) cmake_args+=(-Wno_deprecated -Wno-dev --log-level=ERROR)

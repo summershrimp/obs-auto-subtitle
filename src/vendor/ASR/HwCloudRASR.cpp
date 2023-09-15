@@ -35,14 +35,13 @@ HwCloudRASR::HwCloudRASR(const QString &region, const QString &project_id,
 			 const QString &token, QObject *parent)
 	: ASRBase(parent), region(region), project_id(project_id), token(token)
 {
-	connect(&ws, &QWebSocket::connected, this, &HwCloudRASR::onConnected);
-	connect(&ws, &QWebSocket::disconnected, this,
+	connect(&ws, &QWebsocketpp::connected, this, &HwCloudRASR::onConnected);
+	connect(&ws, &QWebsocketpp::disconnected, this,
 		&HwCloudRASR::onDisconnected);
-	connect(&ws, &QWebSocket::textMessageReceived, this,
+	connect(&ws, &QWebsocketpp::textMessageReceived, this,
 		&HwCloudRASR::onTextMessageReceived);
 	connect(this, &HwCloudRASR::haveResult, this, &HwCloudRASR::onResult);
-	connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this,
-		SLOT(onError(QAbstractSocket::SocketError)));
+	connect(&ws, &QWebsocketpp::errorOccurred, this, &HwCloudRASR::onError);
 
 	running = false;
 }
