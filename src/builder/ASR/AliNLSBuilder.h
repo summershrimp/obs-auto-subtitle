@@ -25,7 +25,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include "../base/ASRBuilderBase.h"
 #include "../../vendor/ASR/AliNLS.h"
 
-#define ALINLS_TOKEN_META "https://nls-meta.cn-shanghai.aliyuncs.com"
+#define ALINLS_TOKEN_META "https://nls-meta.cn-shanghai.aliyuncs.com/"
 
 class AliNLSBuilder : public ASRBuilderBase {
 public:

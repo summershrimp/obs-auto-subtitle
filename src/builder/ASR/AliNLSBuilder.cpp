@@ -131,7 +131,7 @@ void AliNLSBuilder::refreshToken(){
     meta.setQuery(query);
 
     QNetworkRequest request(meta);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    //request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setTransferTimeout(6000);
     QNetworkAccessManager networkManager;
     QEventLoop loop;

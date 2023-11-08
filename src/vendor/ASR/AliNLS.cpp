@@ -52,10 +52,10 @@ void AliNLS::onStart()
 	QUrl url(ALINLS_URL);
 	qDebug() << url.toString();
 	QUrlQuery query;
-
+	query.addQueryItem("token", token);
 	url.setQuery(query);
 	request.setUrl(url);
-	request.setRawHeader(ALINLS_TOKEN_HEADER, token.toLocal8Bit());
+	//request.setRawHeader(ALINLS_TOKEN_HEADER, token.toLocal8Bit());
 	ws.open(request);
 }
 
