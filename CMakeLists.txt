@@ -26,10 +26,12 @@ set(obs-auto-subtitle_SOURCES
     src/builder/ASR/XFRtASRBuilder.cpp
     src/builder/Trans/XFTransBuilder.cpp
     src/builder/Trans/GSTransBuilder.cpp
+    src/builder/ASR/FunASRBuilder.cpp
     src/vendor/ASR/ASRBase.cpp
     src/vendor/ASR/XFRtASR.cpp
     src/vendor/ASR/HwCloudRASR.cpp
     src/vendor/ASR/AliNLS.cpp
+    src/vendor/ASR/FunASR.cpp
     src/vendor/Trans/TransBase.cpp
     src/vendor/Trans/XFTrans.cpp
     src/vendor/Trans/GScriptTrans.cpp)
