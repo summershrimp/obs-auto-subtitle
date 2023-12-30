@@ -22,11 +22,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <QObject>
 #include <QThread>
 #include <obs-module.h>
-#include <util/threading.h>
-#include <util/platform.h>
 #include <chrono>
-#include <media-io/audio-resampler.h>
-
 #include "obs-auto-subtitle.h"
 #include "obs-autosub-filter.h"
 
@@ -72,7 +68,8 @@ static bool add_sources(void *data, obs_source_t *source)
 static bool provider_modified(obs_properties_t *props, obs_property_t *property,
 			      obs_data_t *settings)
 {
-	int cur_provider = obs_data_get_int(settings, PROP_PROVIDER);
+	(void)property;
+	int cur_provider = (int)obs_data_get_int(settings, PROP_PROVIDER);
 
 	for (auto iter : ASRBuilders.getAllBuilder()) {
 		iter.second->hideProperties(props);
@@ -90,9 +87,10 @@ static bool translate_provider_modified(void *priv, obs_properties_t *props,
 					obs_property_t *property,
 					obs_data_t *settings)
 {
-	int cur_provider = obs_data_get_int(settings, PROP_TRANS_PROVIDER);
+	(void)property;
+	int cur_provider = (int)obs_data_get_int(settings, PROP_TRANS_PROVIDER);
 	int enabled = obs_data_get_bool(settings, PROP_TRANS_ENABLED);
-	auto s = (struct autosub_filter *)priv;
+	(void)priv;
 	for (auto iter : TransBuilders.getAllBuilder()) {
 		iter.second->hideProperties(props);
 	}
@@ -110,7 +108,7 @@ static bool translate_enable_modified(void *priv, obs_properties_t *props,
 				      obs_data_t *settings)
 {
 	int enabled = obs_data_get_bool(settings, PROP_TRANS_ENABLED);
-	auto s = (struct autosub_filter *)priv;
+	(void)priv;
 	if (!enabled) {
 		PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_PROVIDER);
 		PROPERTY_SET_UNVISIBLE(props, PROP_TRANS_TARGET_TEXT_SOURCE);
@@ -127,7 +125,7 @@ static bool translate_enable_modified(void *priv, obs_properties_t *props,
 
 obs_properties_t *autosub_filter_getproperties(void *data)
 {
-	auto s = (struct autosub_filter *)data;
+	(void)data;
 
 	obs_properties_t *props = obs_properties_create();
 
@@ -253,10 +251,10 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 		obs_weak_source_release(old_weak_text_source);
 	}
 
-	s->max_count = obs_data_get_int(settings, PROP_MAX_COUNT);
-	s->clear_timeout = obs_data_get_int(settings, PROP_CLEAR_TIMEOUT);
+	s->max_count = (int)obs_data_get_int(settings, PROP_MAX_COUNT);
+	s->clear_timeout = (int)obs_data_get_int(settings, PROP_CLEAR_TIMEOUT);
 
-	int provider = obs_data_get_int(settings, PROP_PROVIDER);
+	int provider = (int)obs_data_get_int(settings, PROP_PROVIDER);
 	if (provider != s->provider) {
 		s->provider = provider;
 		s->refresh = true;
@@ -336,7 +334,7 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 	bool trans_enabled = obs_data_get_bool(settings, PROP_TRANS_ENABLED);
 	s->enable_trans = trans_enabled;
 
-	int trans_sp = obs_data_get_int(settings, PROP_TRANS_PROVIDER);
+	int trans_sp = (int)obs_data_get_int(settings, PROP_TRANS_PROVIDER);
 	s->trans_provider = trans_sp;
 	TransBuilderBase *transBuilder = static_cast<TransBuilderBase *>(
 		TransBuilders.getBuilder(trans_sp));
@@ -427,7 +425,7 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 				s->last_update_time = os_gettime_ns();
 			}
 			int t = s->max_count;
-			if (t != 0 && str.count() > t) {
+			if (t != 0 && str.length() > t) {
 				str = str.right(t);
 			}
 			setText(str);
@@ -436,17 +434,25 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 	s->lock_asr.unlock();
 }
 
-void autosub_filter_shown(void *data) {}
+void autosub_filter_shown(void *data)
+{
+	(void)data;
+}
 
-void autosub_filter_hidden(void *data) {}
+void autosub_filter_hidden(void *data)
+{
+	(void)data;
+}
 
 void autosub_filter_activated(void *data)
 {
+	(void)data;
 	blog(LOG_INFO, "source activated.\n");
 }
 
 void autosub_filter_deactivated(void *data)
 {
+	(void)data;
 	blog(LOG_INFO, "source deactivated.\n");
 }
 
@@ -510,6 +516,7 @@ struct obs_audio_data *autosub_filter_audio(void *data,
 
 static void autosub_filter_tick(void *data, float seconds)
 {
+	(void)seconds;
 	autosub_filter *s = (autosub_filter *)data;
 	char *new_name = nullptr;
 	uint64_t t = os_gettime_ns();

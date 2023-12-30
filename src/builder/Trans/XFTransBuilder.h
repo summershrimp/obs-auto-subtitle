@@ -28,24 +28,23 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 class XFTransBuilder : public TransBuilderBase {
 public:
-    XFTransBuilder(bool isNiu): isNiuTrans(isNiu) {};
-    void getProperties(obs_properties_t *props);
-    void showProperties(obs_properties_t *props);
-    void hideProperties(obs_properties_t *props);
-    void updateSettings(obs_data_t *settings);
-    void getDefaults(obs_data_t *settings);
-    TransBase *build();
+	XFTransBuilder(bool isNiu) : isNiuTrans(isNiu){};
+	void getProperties(obs_properties_t *props);
+	void showProperties(obs_properties_t *props);
+	void hideProperties(obs_properties_t *props);
+	void updateSettings(obs_data_t *settings);
+	void getDefaults(obs_data_t *settings);
+	TransBase *build();
 
 protected:
-    static const LangList *langList;
+	static const LangList *langList;
 
 private:
-    QString appId;
-    QString apiKey;
-    QString apiSecret;
-    bool isNiuTrans = false;
-    bool needBuild = false;
+	QString appId;
+	QString apiKey;
+	QString apiSecret;
+	bool isNiuTrans = false;
+	bool needBuild = false;
 };
 
 #endif
-

@@ -19,6 +19,6 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #ifndef OBS_AUTOSUB_H
 #define OBS_AUTOSUB_H
 
-#include "plugin-macros.generated.h"
+#include "plugin-support.h"
 
 #endif // OBS_AUTOSUB_H

@@ -92,64 +92,71 @@ static void get_valid_locale_names(std::vector<locale_info> &locales)
 	}
 }
 
-MSSAPIBuilder::MSSAPIBuilder(){
-    get_valid_locale_names(locales);
+MSSAPIBuilder::MSSAPIBuilder()
+{
+	get_valid_locale_names(locales);
 }
 
-void MSSAPIBuilder::getProperties(obs_properties_t *props){
-    auto t = obs_properties_add_list(props, PROP_MSSAPI_LANG, T_LANGUAGE,
-				    OBS_COMBO_TYPE_LIST,
-				    OBS_COMBO_FORMAT_INT);
-    for(auto &i: locales) {
-        obs_property_list_add_int(t, i.name, i.id);
-    }
+void MSSAPIBuilder::getProperties(obs_properties_t *props)
+{
+	auto t = obs_properties_add_list(props, PROP_MSSAPI_LANG, T_LANGUAGE,
+					 OBS_COMBO_TYPE_LIST,
+					 OBS_COMBO_FORMAT_INT);
+	for (auto &i : locales) {
+		obs_property_list_add_int(t, i.name, i.id);
+	}
 }
 
-void MSSAPIBuilder::showProperties(obs_properties_t *props){
-    PROPERTY_SET_VISIBLE(props, PROP_MSSAPI_LANG);
+void MSSAPIBuilder::showProperties(obs_properties_t *props)
+{
+	PROPERTY_SET_VISIBLE(props, PROP_MSSAPI_LANG);
 }
 
-void MSSAPIBuilder::hideProperties(obs_properties_t *props){
-    PROPERTY_SET_UNVISIBLE(props, PROP_MSSAPI_LANG);
+void MSSAPIBuilder::hideProperties(obs_properties_t *props)
+{
+	PROPERTY_SET_UNVISIBLE(props, PROP_MSSAPI_LANG);
 }
 
-void MSSAPIBuilder::updateSettings(obs_data_t *settings){
-    int _lang_id = obs_data_get_int(settings, PROP_MSSAPI_LANG);
-    CHECK_CHANGE_SET_ALL(this->lang_id, _lang_id, needBuild);
+void MSSAPIBuilder::updateSettings(obs_data_t *settings)
+{
+	int _lang_id = obs_data_get_int(settings, PROP_MSSAPI_LANG);
+	CHECK_CHANGE_SET_ALL(this->lang_id, _lang_id, needBuild);
 }
 
-void MSSAPIBuilder::getDefaults(obs_data_t *settings){
-    (void) settings;
+void MSSAPIBuilder::getDefaults(obs_data_t *settings)
+{
+	(void)settings;
 }
 
-ASRBase *MSSAPIBuilder::build(){
-    if(!needBuild) {
-        return nullptr;
-    }
-    needBuild = false;
-    wchar_t wname[256];
-    if (!LCIDToLocaleName(lang_id, wname, 256, 0)) {
-        blog(LOG_WARNING, "Failed to get locale name: %d",
-                (int)GetLastError());
-        return nullptr;
-    }
-    size_t len = (size_t)wcslen(wname);
+ASRBase *MSSAPIBuilder::build()
+{
+	if (!needBuild) {
+		return nullptr;
+	}
+	needBuild = false;
+	wchar_t wname[256];
+	if (!LCIDToLocaleName(lang_id, wname, 256, 0)) {
+		blog(LOG_WARNING, "Failed to get locale name: %d",
+		     (int)GetLastError());
+		return nullptr;
+	}
+	size_t len = (size_t)wcslen(wname);
 
-    std::string lang_name;
-    lang_name.resize(len);
+	std::string lang_name;
+	lang_name.resize(len);
 
-    for (size_t i = 0; i < len; i++)
-        lang_name[i] = (char)wname[i];
+	for (size_t i = 0; i < len; i++)
+		lang_name[i] = (char)wname[i];
 
-    try {
-        auto asr = new MSSAPI(lang_name.c_str());
-        return asr;
-    } catch (std::string text) {
-        blog(LOG_WARNING, "Failed to create handler: %s", text.c_str());
-    }
-    return nullptr;
+	try {
+		auto asr = new MSSAPI(lang_name.c_str());
+		return asr;
+	} catch (std::string text) {
+		blog(LOG_WARNING, "Failed to create handler: %s", text.c_str());
+	}
+	return nullptr;
 }
 
-static MSSAPIBuilder mssapiBuilder; 
-static ASRBuilderRegister register_mssapi_asr( &mssapiBuilder, MSSAPI_PROVIDER_ID, L_SP_MSSAPI);
-
+static MSSAPIBuilder mssapiBuilder;
+static ASRBuilderRegister register_mssapi_asr(&mssapiBuilder,
+					      MSSAPI_PROVIDER_ID, L_SP_MSSAPI);

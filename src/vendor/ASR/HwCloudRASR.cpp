@@ -78,6 +78,7 @@ void HwCloudRASR::onStart()
 
 void HwCloudRASR::onError(QAbstractSocket::SocketError error)
 {
+	(void)error;
 	auto errorCb = getErrorCallback();
 	if (errorCb)
 		errorCb(ERROR_SOCKET, ws.errorString());

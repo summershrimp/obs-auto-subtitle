@@ -37,7 +37,8 @@ XFRtASR::XFRtASR(const QString &appId, const QString &apiKey, QObject *parent)
 	: ASRBase(parent), appId(appId), apiKey(apiKey)
 {
 	connect(&ws, &QWebsocketpp::connected, this, &XFRtASR::onConnected);
-	connect(&ws, &QWebsocketpp::disconnected, this, &XFRtASR::onDisconnected);
+	connect(&ws, &QWebsocketpp::disconnected, this,
+		&XFRtASR::onDisconnected);
 	connect(&ws, &QWebsocketpp::textMessageReceived, this,
 		&XFRtASR::onTextMessageReceived);
 	connect(this, &XFRtASR::haveResult, this, &XFRtASR::onResult);
@@ -54,6 +55,7 @@ void XFRtASR::onStart()
 
 void XFRtASR::onError(QAbstractSocket::SocketError error)
 {
+	(void)error;
 	auto cb = getErrorCallback();
 	if (cb)
 		cb(ERROR_SOCKET, ws.errorString());
