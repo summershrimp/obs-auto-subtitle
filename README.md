@@ -28,4 +28,3 @@ QQ(Chinese only):
 
 ## Automated Builds
 [![Build Status](https://xm1994.visualstudio.com/obs-auto-subtitle/_apis/build/status/summershrimp.obs-auto-subtitle?branchName=master)](https://xm1994.visualstudio.com/obs-auto-subtitle/_build/latest?definitionId=1&branchName=master)
-

@@ -34,12 +34,12 @@ FunASR::FunASR(const QString &endpoint, QObject *parent)
 	: ASRBase(parent), endpoint(endpoint)
 {
 	connect(&ws, &QWebsocketpp::connected, this, &FunASR::onConnected);
-	connect(&ws, &QWebsocketpp::disconnected, this, &FunASR::onDisconnected);
+	connect(&ws, &QWebsocketpp::disconnected, this,
+		&FunASR::onDisconnected);
 	connect(&ws, &QWebsocketpp::textMessageReceived, this,
 		&FunASR::onTextMessageReceived);
 	connect(this, &FunASR::haveResult, this, &FunASR::onResult);
-	connect(&ws, SIGNAL(error(QAbstractSocket::SocketError)), this,
-		SLOT(onError(QAbstractSocket::SocketError)));
+	connect(&ws, &QWebsocketpp::errorOccurred, this, &FunASR::onError);
 	running = false;
 }
 
@@ -54,6 +54,7 @@ void FunASR::onStart()
 
 void FunASR::onError(QAbstractSocket::SocketError error)
 {
+	(void)error;
 	auto errorCb = getErrorCallback();
 	if (errorCb)
 		errorCb(ERROR_SOCKET, ws.errorString());
@@ -94,6 +95,7 @@ void FunASR::onDisconnected()
 
 void FunASR::onSendAudioMessage(const char *data, unsigned long size)
 {
+	qDebug() << "send audio message";
 	if (!running) {
 		return;
 	}
@@ -104,7 +106,7 @@ void FunASR::onTextMessageReceived(const QString message)
 {
 	QJsonDocument doc(QJsonDocument::fromJson(message.toUtf8()));
 	qDebug() << "FunASR receive:" << message;
-	bool ok = false;
+
 	if (!doc.isObject()) {
 		return;
 	}
@@ -140,9 +142,11 @@ void FunASR::onResult(QString message, int type)
 
 void FunASR::onStop()
 {
-	QJsonObject _payload = {{"is_speaking", false}};
-	QJsonDocument doc(_payload);
-	ws.sendTextMessage(doc.toJson());
+	if (running) {
+		QJsonObject _payload = {{"is_speaking", false}};
+		QJsonDocument doc(_payload);
+		ws.sendTextMessage(doc.toJson());
+	}
 	ws.close();
 }
 

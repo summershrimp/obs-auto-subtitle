@@ -19,6 +19,8 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #ifndef OBS_AUTOSUB_FILTER_H
 #define OBS_AUTOSUB_FILTER_H
 
+#include <media-io/audio-resampler.h>
+#include <util/platform.h>
 #include "builder/base/TransBuilderBase.h"
 #include "builder/base/ASRBuilderBase.h"
 

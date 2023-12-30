@@ -20,7 +20,6 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define OBS_AUTOSUB_ALINLS_BUILDER_H
 
 #include <QString>
-#include <QNetworkAccessManager>
 
 #include "../base/ASRBuilderBase.h"
 #include "../../vendor/ASR/AliNLS.h"
@@ -29,28 +28,25 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 class AliNLSBuilder : public ASRBuilderBase {
 public:
-    void getProperties(obs_properties_t *props);
-    void showProperties(obs_properties_t *props);
-    void hideProperties(obs_properties_t *props);
-    void updateSettings(obs_data_t *settings);
-    void getDefaults(obs_data_t *settings);
-    ASRBase *build();
+	void getProperties(obs_properties_t *props);
+	void showProperties(obs_properties_t *props);
+	void hideProperties(obs_properties_t *props);
+	void updateSettings(obs_data_t *settings);
+	void getDefaults(obs_data_t *settings);
+	ASRBase *build();
 
 protected:
-
 private:
-    void refreshToken();
-    QString access_key;
-    QString secret;
-    QString appkey;
-    QString token;
-    bool punc;
-    bool itn;
-    bool inter_result;
-    bool needBuild = false;
-    bool needRefresh = false;
-
+	void refreshToken();
+	QString access_key;
+	QString secret;
+	QString appkey;
+	QString token;
+	bool punc;
+	bool itn;
+	bool inter_result;
+	bool needBuild = false;
+	bool needRefresh = false;
 };
 
-
-#endif OBS_AUTOSUB_ALINLS_BUILDER_H
+#endif // OBS_AUTOSUB_ALINLS_BUILDER_H

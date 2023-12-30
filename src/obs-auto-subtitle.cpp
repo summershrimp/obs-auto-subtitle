@@ -18,8 +18,9 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include <QCoreApplication>
 #include <QDir>
 #include <QtGlobal>
+#include <QString>
+#include <QWebsocketpp>
 #include <obs-module.h>
-#include <util/platform.h>
 #include "obs-auto-subtitle.h"
 
 #if defined(__APPLE__)
@@ -36,27 +37,10 @@ struct obs_source_info autosub_filter_info;
 bool obs_module_load(void)
 {
 
-#if defined(__APPLE__)
-	Dl_info info;
-	dladdr((const void *)obs_module_load, &info);
-	blog(LOG_INFO, "path: %s", info.dli_fname);
-	QFileInfo plugin_path(info.dli_fname);
-	QDir tls_plugin_path = plugin_path.dir();
-	QDir openssl_plugin_path = plugin_path.dir();
-	bool exist_plugins = tls_plugin_path.cd(QStringLiteral("../PlugIns"));
-	bool exist_Frameworks =
-		openssl_plugin_path.cd(QStringLiteral("../Frameworks"));
-	if (!exist_plugins || !exist_Frameworks) {
-		blog(LOG_INFO, "TLS plugins is not packed, I may not work.");
-	} else {
-		QByteArray env = qgetenv("DYLD_LIBRARY_PATH");
-		env = openssl_plugin_path.path().toLatin1() + ":" + env;
-		qputenv("DYLD_LIBRARY_PATH", env);
-		QCoreApplication::addLibraryPath(
-			tls_plugin_path.absolutePath());
-	}
-#endif
-
+	char *cacert = obs_module_file("ca-bundle.crt");
+	QWebsocketpp::setDefaultCACertPath(cacert);
+	bfree(cacert);
+	cacert = nullptr;
 	autosub_filter_info = create_autosub_filter_info();
 	obs_register_source(&autosub_filter_info);
 

@@ -26,22 +26,20 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 class XFRtASRBuilder : public ASRBuilderBase {
 public:
-    void getProperties(obs_properties_t *props);
-    void showProperties(obs_properties_t *props);
-    void hideProperties(obs_properties_t *props);
-    void updateSettings(obs_data_t *settings);
-    void getDefaults(obs_data_t *settings);
-    ASRBase *build();
+	void getProperties(obs_properties_t *props);
+	void showProperties(obs_properties_t *props);
+	void hideProperties(obs_properties_t *props);
+	void updateSettings(obs_data_t *settings);
+	void getDefaults(obs_data_t *settings);
+	ASRBase *build();
 
 protected:
-
 private:
-    QString appid;
-    QString apikey;
-    bool punc;
-    QString pd;
-    bool needBuild = false;
+	QString appid;
+	QString apikey;
+	bool punc;
+	QString pd;
+	bool needBuild = false;
 };
 
-
-#endif OBS_AUTOSUB_XFRTASR_BUILDER_H
+#endif // OBS_AUTOSUB_XFRTASR_BUILDER_H

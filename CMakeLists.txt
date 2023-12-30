@@ -1,23 +1,72 @@
-cmake_minimum_required(VERSION 3.16...3.21)
+cmake_minimum_required(VERSION 3.16...3.26)
 
-# Change obs-plugintemplate to your plugin's name in a machine-readable format (e.g.:
-# obs-myawesomeplugin) and set
-project(obs-auto-subtitle VERSION 0.6.0)
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCOPE)
+
+project(${_name} VERSION ${_version})
+
+set(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" OFF)
+set(ENABLE_QT "Use Qt functionality" ON)
+
+include(compilerconfig)
+include(defaults)
+include(helpers)
+
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
-# Replace `Your Name Here` with the name (yours or your organization's) you want to see as the
-# author of the plugin (in the plugin's metadata itself and in the installers)
-set(PLUGIN_AUTHOR "Yibai Zhang")
+find_package(libobs REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
-# Replace `com.example.obs-plugin-template` with a unique Bundle ID for macOS releases (used both in
-# the installer and when submitting the installer for notarization)
-set(MACOS_BUNDLEID "com.summershrimp.${CMAKE_PROJECT_NAME}")
+if(ENABLE_FRONTEND_API)
+  find_package(obs-frontend-api REQUIRED)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
+endif()
 
-# Replace `me@contoso.com` with the maintainer email address you want to put in Linux packages
-set(LINUX_MAINTAINER_EMAIL "xm1994@gmail.com")
+if(ENABLE_QT)
+  find_qt(COMPONENTS Widgets Core Network)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt::Core Qt::Widgets Qt::Network)
+  target_compile_options(
+    ${CMAKE_PROJECT_NAME} PRIVATE $<$<C_COMPILER_ID:Clang,AppleClang>:-Wno-quoted-include-in-framework-header
+                                  -Wno-comma>)
+  set_target_properties(
+    ${CMAKE_PROJECT_NAME}
+    PROPERTIES AUTOMOC ON
+               AUTOUIC ON
+               AUTORCC ON)
+endif()
 
-# Add your custom source files here - header files are optional and only required for visibility
-# e.g. in Xcode or Visual Studio
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
+
+# Find WebSocket++
+find_package(websocketpp REQUIRED)
+
+# Find Asio
+find_package(Asio REQUIRED)
+
+# Find OpenSSL
+set(OPENSSL_USE_STATIC_LIBS TRUE)
+find_package(OpenSSL REQUIRED)
+
+include(FetchContent)
+FetchContent_Declare(
+  cpr
+  URL https://github.com/summershrimp/cpr/archive/refs/tags/1.10.5-1.tar.gz
+  URL_HASH SHA256=8264839949f3724f7766a31bb4473692ac6b5e334b989bd520dac2cb0bd4bcbb
+  EXCLUDE_FROM_ALL)
+if(NOT cpr_POPULATED)
+  FetchContent_Populate(cpr)
+  set(CPR_USE_SYSTEM_CURL ON)
+  set(BUILD_SHARED_LIBS OFF)
+  add_subdirectory(${cpr_SOURCE_DIR} ${cpr_BINARY_DIR} EXCLUDE_FROM_ALL)
+  if(UNIX)
+    target_compile_options(cpr PRIVATE -fPIC)
+  endif()
+endif()
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenSSL::Crypto OpenSSL::SSL websocketpp::websocketpp cpr::cpr)
+
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ASIO_STANDALONE)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/util/QWebsocketpp")
+
 set(obs-auto-subtitle_SOURCES
     src/obs-auto-subtitle.cpp
     src/obs-autosub-filter.cpp
@@ -39,162 +88,11 @@ set(obs-auto-subtitle_SOURCES
 
 if(WIN32)
   set(obs-auto-subtitle_SOURCES
-      ${obs-auto-subtitle_SOURCES}
-      src/builder/ASR/MSSAPIBuilder.cpp
-      src/vendor/ASR/mssapi-captions/captions-handler.cpp
-      src/vendor/ASR/mssapi-captions/captions-mssapi.cpp
-      src/vendor/ASR/mssapi-captions/captions-mssapi-stream.cpp
-      src/vendor/ASR/mssapi.cpp)
+      ${obs-auto-subtitle_SOURCES} src/builder/ASR/MSSAPIBuilder.cpp
+      src/vendor/ASR/mssapi-captions/captions-handler.cpp src/vendor/ASR/mssapi-captions/captions-mssapi.cpp
+      src/vendor/ASR/mssapi-captions/captions-mssapi-stream.cpp src/vendor/ASR/mssapi.cpp)
 endif()
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${obs-auto-subtitle_SOURCES})
 
-# Import libobs as main plugin dependency
-find_package(libobs REQUIRED)
-include(cmake/ObsPluginHelpers.cmake)
-
-# Uncomment these lines if you want to use the OBS Frontend API in your plugin
-#[[
-find_package(obs-frontend-api REQUIRED)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
-#]]
-
-# Uncomment those lines if you want to use Qt in your plugin
-
-find_qt(COMPONENTS Widgets Core Network WebSockets)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
-
-# Find WebSocket++
-find_package(Websocketpp REQUIRED)
-
-# Find Asio
-find_package(Asio REQUIRED)
-
-# Find OpenSSL
-#set(OPENSSL_USE_STATIC_LIBS TRUE)
-find_package(OpenSSL REQUIRED)
-find_package(CURL REQUIRED)
-
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE 
-  Qt::Core
-  Qt::Widgets
-  Qt::Network
-  OpenSSL::Crypto
-  OpenSSL::SSL
-  CURL::libcurl)
-
-set_target_properties(
-  ${CMAKE_PROJECT_NAME}
-  PROPERTIES AUTOMOC ON
-             AUTOUIC ON
-             AUTORCC ON)
-
-configure_file(src/plugin-macros.h.in ${CMAKE_SOURCE_DIR}/src/plugin-macros.generated.h)
-
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-macros.generated.h)
-
-# /!\ TAKE NOTE: No need to edit things past this point /!\
-
-# --- Platform-independent build settings ---
-
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/util/QWebsocketpp)
-
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
-
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ASIO_STANDALONE)
-# --- End of section ---
-
-# --- Windows-specific build settings and tasks ---
-if(OS_WINDOWS)
-  configure_file(cmake/bundle/windows/installer-Windows.iss.in
-                 ${CMAKE_BINARY_DIR}/installer-Windows.generated.iss)
-
-  configure_file(cmake/bundle/windows/resource.rc.in ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.rc)
-  target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.rc)
-
-  if(MSVC)
-    find_package(w32-pthreads REQUIRED)
-    target_link_libraries(obs-auto-subtitle PRIVATE OBS::w32-pthreads)
-
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4)
-  endif()
-
-  install(FILES ${QT6_INSTALL_PREFIX}/bin/Qt6WebSockets.dll DESTINATION ${OBS_LIBRARY_DESTINATION})
-
-  install(FILES ${QT6_INSTALL_PREFIX}/plugins/tls/qcertonlybackend.dll
-                ${QT6_INSTALL_PREFIX}/plugins/tls/qschannelbackend.dll
-          DESTINATION ${OBS_LIBRARY_DESTINATION}/tls)
-  # --- End of section ---
-
-  # -- macOS specific build settings and tasks --
-elseif(OS_MACOS)
-  configure_file(cmake/bundle/macos/installer-macos.pkgproj.in
-                 ${CMAKE_BINARY_DIR}/installer-macos.generated.pkgproj)
-
-  set(MACOSX_PLUGIN_GUI_IDENTIFIER "${MACOS_BUNDLEID}")
-  set(MACOSX_PLUGIN_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}")
-  set(MACOSX_PLUGIN_SHORT_VERSION_STRING "1")
-
-  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall)
-
-  # --- End of section ---
-
-  # --- Linux-specific build settings and tasks ---
-else()
-  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall)
-endif()
-# --- End of section ---
-
-setup_plugin_target(${CMAKE_PROJECT_NAME})
-if(OS_MACOS)
-  install(
-    DIRECTORY "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_LIBS}/QtWebSockets.framework"
-    DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks"
-    COMPONENT obs_plugins
-    PATTERN "Headers" EXCLUDE)
-  install(
-    DIRECTORY "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}/tls"
-    DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/PlugIns"
-    COMPONENT obs_plugins)
-
-  find_package(OpenSSL REQUIRED)
-  foreach(_lib IN ITEMS ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
-    if(IS_SYMLINK "${_lib}")
-      file(READ_SYMLINK "${_lib}" _real)
-      if(NOT IS_ABSOLUTE "${_real}")
-        get_filename_component(_dir "${_lib}" DIRECTORY)
-        get_filename_component(_real "${_dir}/${_real}" ABSOLUTE)
-      endif()
-    else()
-      set(_real "${_lib}")
-    endif()
-
-    install(
-      FILES ${_lib} ${_real}
-      DESTINATION "./${CMAKE_PROJECT_NAME}.plugin/Contents/Frameworks"
-      COMPONENT obs_plugins)
-  endforeach()
-
-  if(${QT_VERSION} EQUAL 5)
-    set(_QT_FW_VERSION "${QT_VERSION}")
-  else()
-    set(_QT_FW_VERSION "A")
-  endif()
-  set(_COMMAND
-      "${CMAKE_INSTALL_NAME_TOOL} \\
-        -change @rpath/QtWebSockets.framework/Versions/${_QT_FW_VERSION}/QtWebSockets @loader_path/../Frameworks/QtWebSockets.framework/Versions/${_QT_FW_VERSION}/QtWebSockets \\
-        -add_rpath @loader_path/../Frameworks \\
-        \\\"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.plugin/Contents/MacOS/${CMAKE_PROJECT_NAME}\\\""
-  )
-  install(CODE "execute_process(COMMAND /bin/sh -c \"${_COMMAND}\")" COMPONENT obs_plugins)
-
-  set(_COMMAND
-      "/usr/bin/codesign --force \\
-      --sign \\\"${OBS_BUNDLE_CODESIGN_IDENTITY}\\\" \\
-      --options runtime \\
-      --deep \\
-      --entitlements \\\"${CMAKE_SOURCE_DIR}/cmake/bundle/macOS/entitlements.plist\\\" \\
-      \\\"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.plugin\\\"")
-  install(CODE "execute_process(COMMAND /bin/sh -c \"${_COMMAND}\")" COMPONENT obs_plugins)
-endif()
+set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

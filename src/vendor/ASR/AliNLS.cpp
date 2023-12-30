@@ -34,7 +34,8 @@ AliNLS::AliNLS(const QString &appKey, const QString &token, QObject *parent)
 	: ASRBase(parent), appKey(appKey), token(token)
 {
 	connect(&ws, &QWebsocketpp::connected, this, &AliNLS::onConnected);
-	connect(&ws, &QWebsocketpp::disconnected, this, &AliNLS::onDisconnected);
+	connect(&ws, &QWebsocketpp::disconnected, this,
+		&AliNLS::onDisconnected);
 	connect(&ws, &QWebsocketpp::textMessageReceived, this,
 		&AliNLS::onTextMessageReceived);
 	connect(this, &AliNLS::haveResult, this, &AliNLS::onResult);
@@ -60,6 +61,7 @@ void AliNLS::onStart()
 
 void AliNLS::onError(QAbstractSocket::SocketError error)
 {
+	(void)error;
 	auto errorCb = getErrorCallback();
 	if (errorCb)
 		errorCb(ERROR_SOCKET, ws.errorString());

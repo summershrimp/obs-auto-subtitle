@@ -24,24 +24,22 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include "../../vendor/Trans/TransBase.h"
 #include "PropBuilderBase.h"
 
-class TransBuilderBase: public PropBuilderBase<TransBase> { 
+class TransBuilderBase : public PropBuilderBase<TransBase> {
 public:
-    QString getFromLang() {
-        return fromLang;
-    }
-    QString getToLang() {
-        return toLang;
-    }
+	QString getFromLang() { return fromLang; }
+	QString getToLang() { return toLang; }
+
 protected:
-    QString fromLang;
-    QString toLang;
+	QString fromLang;
+	QString toLang;
 };
 
+#ifndef _PROP
 #define _PROP(name) "autosub_filter_trans_" name
-
+#endif
 struct LangList {
-    const char *lang_id;
-    const char *lang_t;
+	const char *lang_id;
+	const char *lang_t;
 };
 
 #define TransBuilders (*BuilderRegister<TransBase>::builders)

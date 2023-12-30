@@ -26,7 +26,6 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include "../base/ASRBuilderBase.h"
 #include "../../vendor/ASR/mssapi.h"
 
-
 struct locale_info {
 	DStr name;
 	LANGID id;
@@ -41,21 +40,19 @@ struct locale_info {
 
 class MSSAPIBuilder : public ASRBuilderBase {
 public:
-    MSSAPIBuilder();
-    void getProperties(obs_properties_t *props);
-    void showProperties(obs_properties_t *props);
-    void hideProperties(obs_properties_t *props);
-    void updateSettings(obs_data_t *settings);
-    void getDefaults(obs_data_t *settings);
-    ASRBase *build();
+	MSSAPIBuilder();
+	void getProperties(obs_properties_t *props);
+	void showProperties(obs_properties_t *props);
+	void hideProperties(obs_properties_t *props);
+	void updateSettings(obs_data_t *settings);
+	void getDefaults(obs_data_t *settings);
+	ASRBase *build();
 
 protected:
-
 private:
-    std::vector<locale_info> locales;
-    LANGID lang_id;
-    bool needBuild = false;
+	std::vector<locale_info> locales;
+	LANGID lang_id;
+	bool needBuild = false;
 };
-
 
 #endif OBS_AUTOSUB_MSSAPI_BUILDER_H

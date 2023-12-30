@@ -1,8 +1,0 @@
-[requires]
-libcurl/8.4.0
-openssl/3.1.4
-[generators]
-CMakeDeps
-CMakeToolchain
-[layout]
-cmake_layout

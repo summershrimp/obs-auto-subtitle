@@ -36,33 +36,41 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define PROP_FUNASR_ENDPOINT "autosub_filter_funasr_endpoint"
 #define T_ENDPOINT obs_module_text("AutoSub.Endpoint")
 
-void FunASRBuilder::getProperties(obs_properties_t *props){
-    obs_properties_add_text(props, PROP_FUNASR_ENDPOINT, T_ENDPOINT,
-			    OBS_TEXT_DEFAULT);
+void FunASRBuilder::getProperties(obs_properties_t *props)
+{
+	obs_properties_add_text(props, PROP_FUNASR_ENDPOINT, T_ENDPOINT,
+				OBS_TEXT_DEFAULT);
 }
 
-void FunASRBuilder::showProperties(obs_properties_t *props){
-    PROPERTY_SET_VISIBLE(props, PROP_FUNASR_ENDPOINT);
+void FunASRBuilder::showProperties(obs_properties_t *props)
+{
+	PROPERTY_SET_VISIBLE(props, PROP_FUNASR_ENDPOINT);
 }
 
-void FunASRBuilder::hideProperties(obs_properties_t *props){
+void FunASRBuilder::hideProperties(obs_properties_t *props)
+{
 	PROPERTY_SET_UNVISIBLE(props, PROP_FUNASR_ENDPOINT);
 }
 
-void FunASRBuilder::updateSettings(obs_data_t *settings){
-    endpoint = obs_data_get_string(settings, PROP_FUNASR_ENDPOINT);
+void FunASRBuilder::updateSettings(obs_data_t *settings)
+{
+	endpoint = obs_data_get_string(settings, PROP_FUNASR_ENDPOINT);
 }
 
-void FunASRBuilder::getDefaults(obs_data_t *settings){
-    (void) settings;
+void FunASRBuilder::getDefaults(obs_data_t *settings)
+{
+	(void)settings;
 }
 
-ASRBase *FunASRBuilder::build(){
-    
-    auto asr = new FunASR(endpoint);
-    blog(LOG_INFO, "FunASRBuilder: build FunASR %s", endpoint.toStdString().c_str());
-    return asr;
+ASRBase *FunASRBuilder::build()
+{
+
+	auto asr = new FunASR(endpoint);
+	blog(LOG_INFO, "FunASRBuilder: build FunASR %s",
+	     endpoint.toStdString().c_str());
+	return asr;
 }
 
-static FunASRBuilder funASRBuilder; 
-static ASRBuilderRegister register_Alinls_asr(&funASRBuilder, FUNASR_PROVIDER_ID, L_SP_FUNASR);
+static FunASRBuilder funASRBuilder;
+static ASRBuilderRegister register_Alinls_asr(&funASRBuilder,
+					      FUNASR_PROVIDER_ID, L_SP_FUNASR);

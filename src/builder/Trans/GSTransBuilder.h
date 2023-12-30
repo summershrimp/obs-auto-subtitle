@@ -27,20 +27,19 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 class GSTransBuilder : public TransBuilderBase {
 public:
-    void getProperties(obs_properties_t *props);
-    void showProperties(obs_properties_t *props);
-    void hideProperties(obs_properties_t *props);
-    void updateSettings(obs_data_t *settings);
-    void getDefaults(obs_data_t *settings);
-    TransBase *build();
+	void getProperties(obs_properties_t *props);
+	void showProperties(obs_properties_t *props);
+	void hideProperties(obs_properties_t *props);
+	void updateSettings(obs_data_t *settings);
+	void getDefaults(obs_data_t *settings);
+	TransBase *build();
 
 protected:
-    static const LangList *langList;
+	static const LangList *langList;
 
 private:
-    QString deployId;
-    bool needBuild = false;
+	QString deployId;
+	bool needBuild = false;
 };
 
 #endif
-

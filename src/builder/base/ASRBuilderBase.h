@@ -24,21 +24,19 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #include "../../vendor/ASR/ASRBase.h"
 #include "PropBuilderBase.h"
 
-class ASRBuilderBase: public PropBuilderBase<ASRBase> { 
+class ASRBuilderBase : public PropBuilderBase<ASRBase> {
 public:
-    QString getFromLang() {
-        return fromLang;
-    }
-    QString getToLang() {
-        return toLang;
-    }
+	QString getFromLang() { return fromLang; }
+	QString getToLang() { return toLang; }
+
 protected:
-    QString fromLang;
-    QString toLang;
+	QString fromLang;
+	QString toLang;
 };
 
+#ifndef _PROP
 #define _PROP(name) "autosub_filter_asr_" name
-
+#endif
 #define ASRBuilders (*BuilderRegister<ASRBase>::builders)
 
 typedef BuilderRegister<ASRBase> ASRBuilderRegister;

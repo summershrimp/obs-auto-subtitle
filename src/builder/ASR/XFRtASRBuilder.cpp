@@ -41,16 +41,17 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #define T_XF_PD_MEDICAL obs_module_text("AutoSub.XF.PD.Medical")
 #define T_XF_PD_TECH obs_module_text("AutoSub.XF.PD.Tech")
 
-void XFRtASRBuilder::getProperties(obs_properties_t *props){
+void XFRtASRBuilder::getProperties(obs_properties_t *props)
+{
 	obs_properties_add_text(props, PROP_XF_APPID, T_APPID,
-					 OBS_TEXT_DEFAULT);
+				OBS_TEXT_DEFAULT);
 	obs_properties_add_text(props, PROP_XF_APIKEY, T_APIKEY,
-			    OBS_TEXT_DEFAULT);
+				OBS_TEXT_DEFAULT);
 	obs_properties_add_bool(props, PROP_XF_PUNC, T_XF_PUNC);
 
 	auto t = obs_properties_add_list(props, PROP_XF_PD, T_XF_PD,
-				    OBS_COMBO_TYPE_LIST,
-				    OBS_COMBO_FORMAT_STRING);
+					 OBS_COMBO_TYPE_LIST,
+					 OBS_COMBO_FORMAT_STRING);
 	obs_property_list_add_string(t, T_XF_PD_NONE, "none");
 	obs_property_list_add_string(t, T_XF_PD_COURT, "court");
 	obs_property_list_add_string(t, T_XF_PD_EDU, "edu");
@@ -59,49 +60,55 @@ void XFRtASRBuilder::getProperties(obs_properties_t *props){
 	obs_property_list_add_string(t, T_XF_PD_TECH, "tech");
 }
 
-void XFRtASRBuilder::showProperties(obs_properties_t *props){
-    PROPERTY_SET_VISIBLE(props, PROP_XF_APPID);
-    PROPERTY_SET_VISIBLE(props, PROP_XF_APIKEY);
-    PROPERTY_SET_VISIBLE(props, PROP_XF_PUNC);
-    PROPERTY_SET_VISIBLE(props, PROP_XF_PD);
+void XFRtASRBuilder::showProperties(obs_properties_t *props)
+{
+	PROPERTY_SET_VISIBLE(props, PROP_XF_APPID);
+	PROPERTY_SET_VISIBLE(props, PROP_XF_APIKEY);
+	PROPERTY_SET_VISIBLE(props, PROP_XF_PUNC);
+	PROPERTY_SET_VISIBLE(props, PROP_XF_PD);
 }
 
-void XFRtASRBuilder::hideProperties(obs_properties_t *props){
-    PROPERTY_SET_UNVISIBLE(props, PROP_XF_APPID);
+void XFRtASRBuilder::hideProperties(obs_properties_t *props)
+{
+	PROPERTY_SET_UNVISIBLE(props, PROP_XF_APPID);
 	PROPERTY_SET_UNVISIBLE(props, PROP_XF_APIKEY);
 	PROPERTY_SET_UNVISIBLE(props, PROP_XF_PUNC);
 	PROPERTY_SET_UNVISIBLE(props, PROP_XF_PD);
 }
 
-void XFRtASRBuilder::updateSettings(obs_data_t *settings){
-    QString _appid = obs_data_get_string(settings, PROP_XF_APPID);
-    QString _apikey = obs_data_get_string(settings, PROP_XF_APIKEY);
-    bool _punc = obs_data_get_bool(settings, PROP_XF_PUNC);
-    QString _pd = obs_data_get_string(settings, PROP_XF_PD);
-    CHECK_CHANGE_SET_ALL(this->appid, _appid, needBuild);
-    CHECK_CHANGE_SET_ALL(this->apikey, _apikey, needBuild);
-    CHECK_CHANGE_SET_ALL(this->punc, _punc, needBuild);
-    CHECK_CHANGE_SET_ALL(this->pd, _pd, needBuild);
+void XFRtASRBuilder::updateSettings(obs_data_t *settings)
+{
+	QString _appid = obs_data_get_string(settings, PROP_XF_APPID);
+	QString _apikey = obs_data_get_string(settings, PROP_XF_APIKEY);
+	bool _punc = obs_data_get_bool(settings, PROP_XF_PUNC);
+	QString _pd = obs_data_get_string(settings, PROP_XF_PD);
+	CHECK_CHANGE_SET_ALL(this->appid, _appid, needBuild);
+	CHECK_CHANGE_SET_ALL(this->apikey, _apikey, needBuild);
+	CHECK_CHANGE_SET_ALL(this->punc, _punc, needBuild);
+	CHECK_CHANGE_SET_ALL(this->pd, _pd, needBuild);
 }
 
-void XFRtASRBuilder::getDefaults(obs_data_t *settings){
-    (void) settings;
+void XFRtASRBuilder::getDefaults(obs_data_t *settings)
+{
+	(void)settings;
 }
 
-ASRBase *XFRtASRBuilder::build(){
-    if(!needBuild) {
-        return nullptr;
-    }
-    needBuild = false;
-    auto asr = new XFRtASR(appid, apikey);
-    if (pd != "none") {
-        asr->setParam("pd", pd);
-    }
-    if (!punc) {
-        asr->setParam("punc", "0");
-    }
-    return asr;
+ASRBase *XFRtASRBuilder::build()
+{
+	if (!needBuild) {
+		return nullptr;
+	}
+	needBuild = false;
+	auto asr = new XFRtASR(appid, apikey);
+	if (pd != "none") {
+		asr->setParam("pd", pd);
+	}
+	if (!punc) {
+		asr->setParam("punc", "0");
+	}
+	return asr;
 }
 
-static XFRtASRBuilder xfrtasrBuilder; 
-static ASRBuilderRegister register_xfrtasr_asr( &xfrtasrBuilder, XFYUN_PROVIDER_ID, L_SP_XFYUN);
+static XFRtASRBuilder xfrtasrBuilder;
+static ASRBuilderRegister register_xfrtasr_asr(&xfrtasrBuilder,
+					       XFYUN_PROVIDER_ID, L_SP_XFYUN);

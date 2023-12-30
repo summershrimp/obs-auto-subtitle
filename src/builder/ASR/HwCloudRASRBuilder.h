@@ -28,28 +28,26 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 class HwCloudRASRBuilder : public ASRBuilderBase {
 public:
-    void getProperties(obs_properties_t *props);
-    void showProperties(obs_properties_t *props);
-    void hideProperties(obs_properties_t *props);
-    void updateSettings(obs_data_t *settings);
-    void getDefaults(obs_data_t *settings);
-    ASRBase *build();
+	void getProperties(obs_properties_t *props);
+	void showProperties(obs_properties_t *props);
+	void hideProperties(obs_properties_t *props);
+	void updateSettings(obs_data_t *settings);
+	void getDefaults(obs_data_t *settings);
+	ASRBase *build();
 
 protected:
-
 private:
-    void refreshToken();
+	void refreshToken();
 
-    QString project_id;
-    QString region;
-    QString username;
-    QString password;
-    QString domain_name;
-    QString token;
+	QString project_id;
+	QString region;
+	QString username;
+	QString password;
+	QString domain_name;
+	QString token;
 
-    bool needBuild = false;
-    bool needRefresh = false;
+	bool needBuild = false;
+	bool needRefresh = false;
 };
 
-
-#endif OBS_AUTOSUB_HWCLOUDRASR_BUILDER_H
+#endif // OBS_AUTOSUB_HWCLOUDRASR_BUILDER_H
