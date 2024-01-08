@@ -245,9 +245,11 @@ QWebsocketpp::QWebsocketpp(QObject *parent) : QObject(parent)
 
 qint64 QWebsocketpp::sendBinaryMessage(const QByteArray &data)
 {
+	std::lock_guard<std::mutex> lock(running_lck);
 	if (!running) {
 		return 0;
 	}
+
 	if (client_is_tls) {
 		wss_client->send(hdl, data.toStdString(),
 				 websocketpp::frame::opcode::binary);
@@ -260,6 +262,7 @@ qint64 QWebsocketpp::sendBinaryMessage(const QByteArray &data)
 
 qint64 QWebsocketpp::sendTextMessage(const QString &message)
 {
+	std::lock_guard<std::mutex> lock(running_lck);
 	if (!running) {
 		return 0;
 	}
@@ -280,6 +283,7 @@ QString QWebsocketpp::errorString() const
 
 void QWebsocketpp::close(unsigned short closeCode, const QString &reason)
 {
+	std::lock_guard<std::mutex> lock(running_lck);
 	try {
 		if (client_is_tls) {
 			wss_client->close(hdl, closeCode, reason.toStdString());
@@ -289,6 +293,7 @@ void QWebsocketpp::close(unsigned short closeCode, const QString &reason)
 	} catch (websocketpp::exception const &e) {
 		qDebug() << e.what();
 	}
+	running = false;
 }
 
 void QWebsocketpp::ignoreSslErrors()
@@ -306,6 +311,7 @@ void QWebsocketpp::onMessage(websocketpp::connection_hdl thdl,
 			     core_client::message_type::ptr msg)
 {
 	(void)thdl;
+	std::lock_guard<std::mutex> lock(running_lck);
 	if (!running) {
 		return;
 	}
@@ -320,6 +326,13 @@ void QWebsocketpp::onMessage(websocketpp::connection_hdl thdl,
 
 void QWebsocketpp::open(const QNetworkRequest &request)
 {
+
+	{
+		std::lock_guard<std::mutex> lock(running_lck);
+		if (running) {
+			return;
+		}
+	}
 
 	if (request.url().toString().startsWith("ws://")) {
 		client_is_tls = 0;
@@ -342,22 +355,39 @@ void QWebsocketpp::open(const QNetworkRequest &request)
 		wss_client->set_open_handler(
 			[this](websocketpp::connection_hdl hdl) {
 				(void)hdl;
+				{
+					std::lock_guard<std::mutex> lock(
+						running_lck);
+					running = true;
+				}
 				emit connected();
 			});
 
-		wss_client->set_fail_handler(
+		wss_client->set_fail_handler([this](websocketpp::connection_hdl
+							    hdl) {
+			(void)hdl;
+			tls_client::connection_ptr con =
+				wss_client->get_con_from_hdl(hdl);
+			auto m_server = con->get_response_header("Server");
+			auto m_error_reason = con->get_ec().message();
+			qDebug() << m_server.c_str() << m_error_reason.c_str();
+			{
+				std::lock_guard<std::mutex> lock(running_lck);
+				running = false;
+			}
+			emit errorOccurred(QAbstractSocket::SocketError::
+						   ConnectionRefusedError);
+		});
+
+		wss_client->set_close_handler(
 			[this](websocketpp::connection_hdl hdl) {
 				(void)hdl;
-				tls_client::connection_ptr con =
-					wss_client->get_con_from_hdl(hdl);
-				auto m_server =
-					con->get_response_header("Server");
-				auto m_error_reason = con->get_ec().message();
-				qDebug() << m_server.c_str()
-					 << m_error_reason.c_str();
-				emit errorOccurred(
-					QAbstractSocket::SocketError::
-						ConnectionRefusedError);
+				{
+					std::lock_guard<std::mutex> lock(
+						running_lck);
+					running = false;
+				}
+				emit disconnected();
 			});
 
 		websocketpp::lib::error_code ec;
@@ -383,6 +413,11 @@ void QWebsocketpp::open(const QNetworkRequest &request)
 		ws_client->set_open_handler(
 			[this](websocketpp::connection_hdl hdl) {
 				(void)hdl;
+				{
+					std::lock_guard<std::mutex> lock(
+						running_lck);
+					running = true;
+				}
 				emit connected();
 			});
 
@@ -399,6 +434,17 @@ void QWebsocketpp::open(const QNetworkRequest &request)
 				emit errorOccurred(
 					QAbstractSocket::SocketError::
 						ConnectionRefusedError);
+			});
+
+		ws_client->set_close_handler(
+			[this](websocketpp::connection_hdl hdl) {
+				(void)hdl;
+				{
+					std::lock_guard<std::mutex> lock(
+						running_lck);
+					running = false;
+				}
+				emit disconnected();
 			});
 
 		websocketpp::lib::error_code ec;
@@ -420,12 +466,10 @@ void QWebsocketpp::open(const QNetworkRequest &request)
 
 	run_thread = std::thread([this]() {
 		try {
-			running = true;
 			client_is_tls ? wss_client->run() : ws_client->run();
 		} catch (asio::system_error &e) {
 			qDebug() << "asio system_error:" << e.what();
 		}
-		running = false;
 	});
 	run_thread.detach();
 }

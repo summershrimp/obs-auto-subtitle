@@ -72,6 +72,7 @@ private:
 	websocketpp::connection_hdl hdl;
 	QString cacert_path;
 	bool running = false;
+	std::mutex running_lck;
 };
 
 #endif
