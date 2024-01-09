@@ -424,8 +424,8 @@ void QWebsocketpp::open(const QNetworkRequest &request)
 		ws_client->set_fail_handler(
 			[this](websocketpp::connection_hdl hdl) {
 				(void)hdl;
-				tls_client::connection_ptr con =
-					wss_client->get_con_from_hdl(hdl);
+				no_tls_client::connection_ptr con =
+					ws_client->get_con_from_hdl(hdl);
 				auto m_server =
 					con->get_response_header("Server");
 				auto m_error_reason = con->get_ec().message();
