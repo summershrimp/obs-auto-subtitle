@@ -249,15 +249,19 @@ qint64 QWebsocketpp::sendBinaryMessage(const QByteArray &data)
 	if (!running) {
 		return 0;
 	}
-
-	if (client_is_tls) {
-		wss_client->send(hdl, data.toStdString(),
-				 websocketpp::frame::opcode::binary);
-	} else {
-		ws_client->send(hdl, data.toStdString(),
-				websocketpp::frame::opcode::binary);
+	try {
+		if (client_is_tls) {
+			wss_client->send(hdl, data.toStdString(),
+					 websocketpp::frame::opcode::binary);
+		} else {
+			ws_client->send(hdl, data.toStdString(),
+					websocketpp::frame::opcode::binary);
+		}
+		return data.size();
+	} catch (websocketpp::exception const &e) {
+		std::cout << e.what();
+		return 0;
 	}
-	return data.size();
 }
 
 qint64 QWebsocketpp::sendTextMessage(const QString &message)
@@ -266,14 +270,19 @@ qint64 QWebsocketpp::sendTextMessage(const QString &message)
 	if (!running) {
 		return 0;
 	}
-	if (client_is_tls) {
-		wss_client->send(hdl, message.toStdString(),
-				 websocketpp::frame::opcode::text);
-	} else {
-		ws_client->send(hdl, message.toStdString(),
-				websocketpp::frame::opcode::text);
+	try {
+		if (client_is_tls) {
+			wss_client->send(hdl, message.toStdString(),
+					 websocketpp::frame::opcode::text);
+		} else {
+			ws_client->send(hdl, message.toStdString(),
+					websocketpp::frame::opcode::text);
+		}
+		return message.size();
+	} catch (websocketpp::exception const &e) {
+		std::cout << e.what();
+		return 0;
 	}
-	return message.size();
 }
 
 QString QWebsocketpp::errorString() const
