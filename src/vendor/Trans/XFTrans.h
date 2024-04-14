@@ -19,6 +19,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 #ifndef OBS_AUTO_SUBTITLE_XFTRANS_H
 #define OBS_AUTO_SUBTITLE_XFTRANS_H
 
+#include <QCprManager>
 #include <QtNetwork>
 #include "TransBase.h"
 
@@ -33,7 +34,7 @@ public:
 		QString endpoint, QObject *parent = nullptr);
 	~XFTrans();
 public slots:
-	void onResult(QNetworkReply *rep);
+	void onResult(cpr::Response rep);
 	void onRequestTranslate(QString, QString, QString);
 
 private:
@@ -44,7 +45,6 @@ private:
 	QString appId;
 	QString apiKey;
 	QString apiSecret;
-	QNetworkAccessManager manager;
 	QString endpoint;
 };
 

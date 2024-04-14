@@ -1,6 +1,6 @@
 /*
-obs-auto-subtitle
- Copyright (C) 2019-2020 Yibai Zhang
+QCprManager
+ Copyright (C) 2019-2024 Yibai Zhang
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -15,28 +15,24 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
+#ifndef _QCPR_MANAGER_H_
+#define _QCPR_MANAGER_H_
 
-#ifndef OBS_AUTO_SUBTITLE_GSTRANS_H
-#define OBS_AUTO_SUBTITLE_GSTRANS_H
+#include <QThread>
+#include <cpr/cpr.h>
 
-#define GS_ENDPOINT_URL "https://script.google.com/macros/s/%1/exec"
+class QCprManager : public QThread {
+	Q_OBJECT
 
-#include <QCprManager>
-#include "TransBase.h"
-
-#define TRANS_ENDPOINT "https://itrans.xfyun.cn/v2/its"
-#define NIUTRANS_ENDPOINT "https://ntrans.xfyun.cn/v2/ots"
-
-class GScriptTrans : public TransBase {
 public:
-	GScriptTrans(QString deployId, QObject *parent = nullptr);
-	~GScriptTrans();
-public slots:
-	void onResult(cpr::Response rep);
-	void onRequestTranslate(QString, QString, QString);
+	QCprManager(cpr::AsyncResponse &&fr, QObject *parent = nullptr);
 
 private:
-	QString deployId;
+	void run() override;
+	cpr::AsyncResponse fr;
+
+signals:
+	void resultReady(const cpr::Response r);
 };
 
 #endif

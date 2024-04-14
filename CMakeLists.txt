@@ -65,12 +65,16 @@ endif()
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenSSL::Crypto OpenSSL::SSL websocketpp::websocketpp cpr::cpr)
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ASIO_STANDALONE)
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/util/QWebsocketpp")
+target_include_directories(
+  ${CMAKE_PROJECT_NAME}
+  PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/util/QWebsocketpp"
+  PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/util/QCpr")
 
 set(obs-auto-subtitle_SOURCES
     src/obs-auto-subtitle.cpp
     src/obs-autosub-filter.cpp
     src/util/QWebsocketpp/QWebsocketpp.cpp
+    src/util/QCpr/QCprManager.cpp
     src/builder/ASR/AliNLSBuilder.cpp
     src/builder/ASR/HwCloudRASRBuilder.cpp
     src/builder/ASR/XFRtASRBuilder.cpp
