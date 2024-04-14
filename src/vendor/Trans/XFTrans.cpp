@@ -18,6 +18,7 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #include <QCryptographicHash>
 #include <QMessageAuthenticationCode>
+#include <QtNetwork>
 
 #include "XFTrans.h"
 
@@ -27,11 +28,8 @@ XFTrans::XFTrans(QString appId, QString apiKey, QString apiSecret,
 	  appId(appId),
 	  apiKey(apiKey),
 	  apiSecret(apiSecret),
-	  manager(this),
 	  endpoint(TRANS_ENDPOINT)
 {
-	connect(&manager, &QNetworkAccessManager::finished, this,
-		&XFTrans::onResult);
 }
 
 XFTrans::XFTrans(QString appId, QString apiKey, QString apiSecret,
@@ -40,18 +38,15 @@ XFTrans::XFTrans(QString appId, QString apiKey, QString apiSecret,
 	  appId(appId),
 	  apiKey(apiKey),
 	  apiSecret(apiSecret),
-	  manager(this),
 	  endpoint(endpoint)
 {
-	connect(&manager, &QNetworkAccessManager::finished, this,
-		&XFTrans::onResult);
 }
 
 XFTrans::~XFTrans() {}
 
-void XFTrans::onResult(QNetworkReply *rep)
+void XFTrans::onResult(cpr::Response rep)
 {
-	QByteArray content = rep->readAll();
+	QByteArray content = QByteArray::fromStdString(rep.text);
 	QJsonDocument body;
 	body = QJsonDocument::fromJson(content);
 
@@ -111,7 +106,6 @@ void XFTrans::onResult(QNetworkReply *rep)
 	}
 	auto result = iter.value().toString();
 	callbackResult(result);
-	rep->deleteLater();
 }
 
 void XFTrans::onRequestTranslate(QString from, QString to, QString content)
@@ -130,7 +124,19 @@ void XFTrans::onRequestTranslate(QString from, QString to, QString content)
 	QByteArray httpBody = doc.toJson(QJsonDocument::JsonFormat::Compact);
 	QNetworkRequest req = assembleRequest(endpoint, httpBody);
 
-	manager.post(req, httpBody);
+	auto fr = cpr::PostAsync(
+		cpr::Url{req.url().toString().toStdString()},
+		cpr::Body{httpBody.toStdString()},
+		cpr::Header{{"Content-Type", "application/json"},
+			    {"Date", req.rawHeader("Date").toStdString()},
+			    {"Digest", req.rawHeader("Digest").toStdString()},
+			    {"Authorization",
+			     req.rawHeader("Authorization").toStdString()}});
+
+	QCprManager *cprm = new QCprManager(std::move(fr));
+	connect(cprm, &QCprManager::resultReady, this, &XFTrans::onResult);
+	connect(cprm, &QCprManager::finished, cprm, &QCprManager::deleteLater);
+	cprm->start();
 }
 
 QString XFTrans::signBody(QByteArray body)

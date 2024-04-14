@@ -16,21 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program; If not, see <https://www.gnu.org/licenses/>
 */
 
+#include <QtNetwork>
 #include "GScriptTrans.h"
 
 GScriptTrans::GScriptTrans(QString deployId, QObject *parent)
 	: TransBase(parent), deployId(deployId)
 {
-	connect(&manager, &QNetworkAccessManager::finished, this,
-		&GScriptTrans::onResult);
-	manager.setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);
 }
 
 GScriptTrans::~GScriptTrans() {}
 
 void GScriptTrans::onRequestTranslate(QString from, QString to, QString content)
 {
-	QNetworkRequest req;
 	QUrl url;
 	QUrlQuery query;
 	query.addQueryItem("from", from);
@@ -38,15 +35,19 @@ void GScriptTrans::onRequestTranslate(QString from, QString to, QString content)
 	query.addQueryItem("content", content);
 	url.setUrl(QString(GS_ENDPOINT_URL).arg(deployId));
 	url.setQuery(query);
-	req.setUrl(url);
-	manager.get(req);
+
+	auto fr = cpr::GetAsync(cpr::Url{url.toString().toStdString()});
+	QCprManager *cprm = new QCprManager(std::move(fr));
+	connect(cprm, &QCprManager::resultReady, this, &GScriptTrans::onResult);
+	connect(cprm, &QCprManager::finished, cprm, &QCprManager::deleteLater);
+	cprm->start();
 }
 
-void GScriptTrans::onResult(QNetworkReply *rep)
+void GScriptTrans::onResult(cpr::Response rep)
 {
-	QByteArray content = rep->readAll();
 	QJsonDocument body;
-	body = QJsonDocument::fromJson(content);
+	QString reptxt = QString::fromStdString(rep.text);
+	body = QJsonDocument::fromJson(reptxt.toLocal8Bit());
 
 	if (!body.isObject()) {
 		callbackError("Parse response json failed");
@@ -56,7 +57,7 @@ void GScriptTrans::onResult(QNetworkReply *rep)
 	auto iter = bodyObject.find("result");
 
 	if (iter == bodyObject.end() || !iter.value().isString()) {
-		callbackError("reply error: " + content);
+		callbackError("reply error: " + reptxt);
 		return;
 	}
 	auto data = iter.value().toString();

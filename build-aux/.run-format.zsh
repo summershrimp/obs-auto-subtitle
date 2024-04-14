@@ -101,7 +101,7 @@ invoke_formatter() {
     for file (${source_files}) {
       if (( _loglevel > 1 )) log_info "Checking format of ${file}..."
 
-      if ! "${formatter}" ${format_args} "${file}" | diff -q "${file}" - &> /dev/null; then
+      if ! "${formatter}" ${format_args} "${file}" | diff -u "${file}" - ; then
         log_error "${file} requires formatting changes."
 
         if (( fail_on_error == 2 )) return 2;
