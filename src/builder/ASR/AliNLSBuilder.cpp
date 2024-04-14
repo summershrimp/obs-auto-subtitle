@@ -157,12 +157,17 @@ void AliNLSBuilder::refreshToken()
 	QJsonObject jsonObject =
 		QJsonDocument::fromJson(QByteArray::fromStdString(resp.text))
 			.object();
-	token = jsonObject.find("Token")
-			.value()
-			.toObject()
-			.find("Id")
-			.value()
-			.toString();
+	auto tokenIter = jsonObject.find("Token");
+	if (tokenIter == jsonObject.end()) {
+		token = "";
+		blog(LOG_WARNING, "Token error, resp: %s", resp.text.c_str());
+	} else {
+		token = tokenIter.value()
+				.toObject()
+				.find("Id")
+				.value()
+				.toString();
+	}
 	qDebug() << "Token:" << token;
 	needRefresh = false;
 }
