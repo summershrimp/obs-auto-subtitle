@@ -37,7 +37,8 @@ static bool add_sources(void *data, obs_source_t *source)
 	obs_property_t *sources = (obs_property_t *)data;
 	auto source_id = obs_source_get_id(source);
 	if (strcmp(source_id, "text_ft2_source_v2") != 0 &&
-	    strcmp(source_id, "text_gdiplus_v2") != 0) {
+	    strcmp(source_id, "text_gdiplus_v2") != 0 &&
+	    strcmp(source_id, "text_gdiplus_v3") != 0) {
 		return true;
 	}
 
