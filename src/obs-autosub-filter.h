@@ -44,6 +44,12 @@ along with this program; If not, see <https://www.gnu.org/licenses/>
 
 #define PROP_TRANS_TARGET_TEXT_SOURCE "autosub_filter_trans_target_source"
 
+#define PROP_CHATLOG_ENABLED "autosub_filter_enable_chatlog"
+#define T_CHATLOG_ENABLE obs_module_text("AutoSub.EnableChatlog")
+
+#define PROP_CHATLOG_LINES "autosub_filter_chatlog_lines"
+#define T_CHATLOG_LINES obs_module_text("AutoSub.ChatLogLine")
+
 using namespace std::placeholders;
 
 struct autosub_filter {
@@ -52,6 +58,10 @@ struct autosub_filter {
 	uint32_t channels = 2;
 	int max_count = 0;
 	int clear_timeout = 0;
+	bool chatlog_mode = false;
+	int chatlog_lines = 0;
+	QStringList chatlog_asr;
+	QStringList chatlog_trans;
 	bool running = false;
 
 	int provider;

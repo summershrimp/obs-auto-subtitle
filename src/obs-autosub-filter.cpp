@@ -121,6 +121,25 @@ static bool translate_enable_modified(void *priv, obs_properties_t *props,
 	return true;
 }
 
+static bool chatlogmode_enable_modified(void *priv, obs_properties_t *props,
+					obs_property_t *property,
+					obs_data_t *settings)
+{
+	(void)property;
+	int enabled = obs_data_get_bool(settings, PROP_CHATLOG_ENABLED);
+	(void)priv;
+	if (!enabled) {
+		PROPERTY_SET_UNVISIBLE(props, PROP_CHATLOG_LINES);
+		PROPERTY_SET_VISIBLE(props, PROP_MAX_COUNT);
+		PROPERTY_SET_VISIBLE(props, PROP_CLEAR_TIMEOUT);
+	} else {
+		PROPERTY_SET_VISIBLE(props, PROP_CHATLOG_LINES);
+		PROPERTY_SET_UNVISIBLE(props, PROP_MAX_COUNT);
+		PROPERTY_SET_UNVISIBLE(props, PROP_CLEAR_TIMEOUT);
+	}
+	return true;
+}
+
 #undef PROPERTY_SET_UNVISIBLE
 #undef PROPERTY_SET_VISIBLE
 
@@ -133,6 +152,15 @@ obs_properties_t *autosub_filter_getproperties(void *data)
 	obs_property_t *sources = obs_properties_add_list(
 		props, PROP_TARGET_TEXT_SOURCE, T_TARGET_TEXT_SOURCE,
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+
+	obs_property_t *cl = obs_properties_add_bool(
+		props, PROP_CHATLOG_ENABLED, T_CHATLOG_ENABLE);
+
+	obs_property_set_modified_callback2(cl, chatlogmode_enable_modified,
+					    data);
+
+	obs_properties_add_int(props, PROP_CHATLOG_LINES, T_CHATLOG_LINES, 2,
+			       50, 1);
 
 	obs_properties_add_int(props, PROP_MAX_COUNT, T_MAX_CHAR_COUNT, 0,
 			       100000, 1);
@@ -205,6 +233,14 @@ void autosub_filter_getdefaults(obs_data_t *settings)
 struct resample_info resample_output = {16000, AUDIO_FORMAT_16BIT,
 					SPEAKERS_MONO};
 
+void chatlog_filter(QStringList &lines, int cl_lines)
+{
+	auto rl = lines.size();
+	if (rl > cl_lines) {
+		lines.remove(0, lines.size() - cl_lines);
+	}
+}
+
 void autosub_filter_update(void *data, obs_data_t *settings)
 {
 	autosub_filter *s = (autosub_filter *)data;
@@ -252,8 +288,16 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 		obs_weak_source_release(old_weak_text_source);
 	}
 
-	s->max_count = (int)obs_data_get_int(settings, PROP_MAX_COUNT);
-	s->clear_timeout = (int)obs_data_get_int(settings, PROP_CLEAR_TIMEOUT);
+	s->chatlog_mode = obs_data_get_bool(settings, PROP_CHATLOG_ENABLED);
+	s->chatlog_lines = (int)obs_data_get_int(settings, PROP_CHATLOG_LINES);
+	if (!s->chatlog_mode) {
+		s->max_count = (int)obs_data_get_int(settings, PROP_MAX_COUNT);
+		s->clear_timeout =
+			(int)obs_data_get_int(settings, PROP_CLEAR_TIMEOUT);
+	} else {
+		s->max_count = 0;
+		s->clear_timeout = 0;
+	}
 
 	int provider = (int)obs_data_get_int(settings, PROP_PROVIDER);
 	if (provider != s->provider) {
@@ -286,8 +330,9 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 			return;
 		}
 		auto text_settings = obs_source_get_settings(target);
-		obs_data_set_string(text_settings, "text",
-				    str.toUtf8().toStdString().c_str());
+		auto stdstr = str.toUtf8().toStdString();
+		const char *out_str = stdstr.c_str();
+		obs_data_set_string(text_settings, "text", out_str);
 		obs_source_update(target, text_settings);
 		obs_source_release(target);
 	});
@@ -399,8 +444,18 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 	});
 
 	if (s->translator) {
-		s->translator->setResultCallback(
-			[=](QString data) { setTransText(data); });
+		s->translator->setResultCallback([=](QString data) {
+			QString out_str;
+			if (s->chatlog_mode) {
+				s->chatlog_trans.push_back(data);
+				chatlog_filter(s->chatlog_trans,
+					       s->chatlog_lines);
+				out_str = s->chatlog_trans.join("\n");
+			} else {
+				out_str = data;
+			}
+			setTransText(out_str);
+		});
 
 		s->translator->setErrorCallback(
 			[=](QString data) { setTransText(data); });
@@ -425,11 +480,25 @@ void autosub_filter_update(void *data, obs_data_t *settings)
 				     str.toStdString().c_str());
 				s->last_update_time = os_gettime_ns();
 			}
-			int t = s->max_count;
-			if (t != 0 && str.length() > t) {
-				str = str.right(t);
+			QString out_str;
+			if (s->chatlog_mode) {
+				QStringList t = s->chatlog_asr;
+				t.append(str);
+				chatlog_filter(t, s->chatlog_lines);
+				out_str = t.join("\n");
+				if (typ == 0) {
+					s->chatlog_asr.push_back(str);
+					chatlog_filter(s->chatlog_asr,
+						       s->chatlog_lines);
+				}
+			} else {
+				out_str = str;
+				int t = s->max_count;
+				if (t != 0 && str.length() > t) {
+					str = str.right(t);
+				}
 			}
-			setText(str);
+			setText(out_str);
 		});
 	}
 	s->lock_asr.unlock();
